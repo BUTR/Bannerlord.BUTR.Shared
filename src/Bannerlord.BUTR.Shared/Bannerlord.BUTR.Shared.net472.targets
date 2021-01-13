@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <BannerlordBUTRSharedPolyfillPath Condition="'$(BannerlordBUTRSharedPolyfillPath)' == ''">$(MSBuildThisFileDirectory)..\..\contentFiles\cs\net472\Bannerlord.BUTR.Shared\Bannerlord.BUTR.Shared.cs.pp</BannerlordBUTRSharedPolyfillPath>
+  </PropertyGroup>
+</Project>
