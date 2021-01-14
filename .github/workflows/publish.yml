@@ -25,6 +25,13 @@ jobs:
       with:
         dotnet-version: 5.0.x
 
+    - name: Setup BUTR GPR
+      uses: actions/setup-dotnet@master
+      with:
+        source-url: https://nuget.pkg.github.com/BUTR/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
+
     - name: Run _build
       run: >-
         dotnet run -p build/_build.csproj --configuration Release;
