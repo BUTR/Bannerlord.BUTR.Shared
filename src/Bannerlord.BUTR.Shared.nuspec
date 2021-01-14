@@ -2,7 +2,7 @@
 <package xmlns="http://schemas.microsoft.com/packaging/2010/07/nuspec.xsd">
   <metadata>
     <id>Bannerlord.BUTR.Shared</id>
-    <version>1.3.0</version>
+    <version>1.4.0</version>
     <developmentDependency>true</developmentDependency>
     <authors>BUTR Team</authors>
     <license type="expression">MIT</license>
@@ -22,6 +22,7 @@ Contains shared code fot BUTR projects.
   <files>
     <!-- TFMs not supporting IsExternalInit and supporting ExcludeFromCodeCoverage. -->
     <file src="ExcludeFromCodeCoverage/ApplicationVersionUtils.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/ApplicationVersionUtils.cs.pp"/>
+    <file src="ExcludeFromCodeCoverage/ModuleUtils.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/ModuleUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/TextObjectUtils.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/TextObjectUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/DependedModule.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/ModuleInfoExtended/DependedModule.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/DependedModuleMetadata.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/ModuleInfoExtended/DependedModuleMetadata.cs.pp"/>
@@ -31,6 +32,7 @@ Contains shared code fot BUTR projects.
     <file src="ExcludeFromCodeCoverage/EfficientInvoker.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/EfficientInvoker.cs.pp"/>
 
     <file src="ExcludeFromCodeCoverage/ApplicationVersionUtils.cs.pp" target="content/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/ApplicationVersionUtils.cs.pp"/>
+    <file src="ExcludeFromCodeCoverage/ModuleUtils.cs.pp" target="content/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/ModuleUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/TextObjectUtils.cs.pp" target="content/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/TextObjectUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/DependedModule.cs.pp" target="content/cs/netstandard2.0/Bannerlord.BUTR.Shared/ModuleInfoExtended/DependedModule.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/DependedModuleMetadata.cs.pp" target="content/cs/netstandard2.0/Bannerlord.BUTR.Shared/ModuleInfoExtended/DependedModuleMetadata.cs.pp"/>
@@ -40,16 +42,18 @@ Contains shared code fot BUTR projects.
     <file src="ExcludeFromCodeCoverage/EfficientInvoker.cs.pp" target="content/cs/netstandard2.0/Bannerlord.BUTR.Shared/EfficientInvoker.cs.pp"/>
 
 
-    <file src="ExcludeFromCodeCoverage/ApplicationVersionUtils.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/ApplicationVersionUtils.cs.pp"/>
-    <file src="ExcludeFromCodeCoverage/TextObjectUtils.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/TextObjectUtils.cs.pp"/>
-    <file src="ExcludeFromCodeCoverage/DependedModule.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/ModuleInfoExtended/DependedModule.cs.pp"/>
-    <file src="ExcludeFromCodeCoverage/DependedModuleMetadata.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/ModuleInfoExtended/DependedModuleMetadata.cs.pp"/>
-    <file src="ExcludeFromCodeCoverage/LoadType.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/ModuleInfoExtended/LoadType.cs.pp"/>
-    <file src="ExcludeFromCodeCoverage/ModuleInfo2.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/ModuleInfoExtended/ModuleInfo2.cs.pp"/>
-    <file src="ExcludeFromCodeCoverage/SubModuleInfo2.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/ModuleInfoExtended/SubModuleInfo2.cs.pp"/>
-    <file src="ExcludeFromCodeCoverage/EfficientInvoker.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/EfficientInvoker.cs.pp"/>
+    <file src="ExcludeFromCodeCoverage/ApplicationVersionUtils.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/Helpers/ApplicationVersionUtils.cs.pp"/>
+    <file src="ExcludeFromCodeCoverage/ModuleUtils.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/Helpers/ModuleUtils.cs.pp"/>
+    <file src="ExcludeFromCodeCoverage/TextObjectUtils.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/Helpers/TextObjectUtils.cs.pp"/>
+    <file src="ExcludeFromCodeCoverage/DependedModule.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/ModuleInfoExtended/DependedModule.cs.pp"/>
+    <file src="ExcludeFromCodeCoverage/DependedModuleMetadata.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/ModuleInfoExtended/DependedModuleMetadata.cs.pp"/>
+    <file src="ExcludeFromCodeCoverage/LoadType.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/ModuleInfoExtended/LoadType.cs.pp"/>
+    <file src="ExcludeFromCodeCoverage/ModuleInfo2.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/ModuleInfoExtended/ModuleInfo2.cs.pp"/>
+    <file src="ExcludeFromCodeCoverage/SubModuleInfo2.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/ModuleInfoExtended/SubModuleInfo2.cs.pp"/>
+    <file src="ExcludeFromCodeCoverage/EfficientInvoker.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/EfficientInvoker.cs.pp"/>
 
     <file src="ExcludeFromCodeCoverage/ApplicationVersionUtils.cs.pp" target="content/cs/net472/Bannerlord.BUTR.Shared/Helpers/ApplicationVersionUtils.cs.pp"/>
+    <file src="ExcludeFromCodeCoverage/ModuleUtils.cs.pp" target="content/cs/net472/Bannerlord.BUTR.Shared/Helpers/ModuleUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/TextObjectUtils.cs.pp" target="content/cs/net472/Bannerlord.BUTR.Shared/Helpers/TextObjectUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/DependedModule.cs.pp" target="content/cs/net472/Bannerlord.BUTR.Shared/ModuleInfoExtended/DependedModule.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/DependedModuleMetadata.cs.pp" target="content/cs/net472/Bannerlord.BUTR.Shared/ModuleInfoExtended/DependedModuleMetadata.cs.pp"/>

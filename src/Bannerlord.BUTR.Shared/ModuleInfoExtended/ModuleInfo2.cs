@@ -81,16 +81,27 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 
         public void Load(string alias)
         {
-            Alias = alias;
+            var xmlDocument = new XmlDocument();
+            xmlDocument.Load(Path.Combine(PathPrefix, alias, "SubModule.xml"));
+            Load(xmlDocument);
+        }
+
+        public void LoadWithFullPath(string fullPath)
+        {
+            var xmlDocument = new XmlDocument();
+            xmlDocument.Load(Path.Combine(fullPath, "SubModule.xml"));
+            Load(xmlDocument);
+        }
+
+        public void Load(XmlDocument xmlDocument)
+        {
             SubModules.Clear();
             DependedModules.Clear();
             DependedModuleMetadatas.Clear();
 
-            var xmlDocument = new XmlDocument();
-            xmlDocument.Load(Path.Combine(PathPrefix, alias, "SubModule.xml"));
-
             var moduleNode = xmlDocument.SelectSingleNode("Module");
 
+            Alias = moduleNode?.SelectSingleNode("Alias")?.Attributes?["value"]?.InnerText ?? string.Empty;
             Name = moduleNode?.SelectSingleNode("Name")?.Attributes?["value"]?.InnerText ?? string.Empty;
             Id = moduleNode?.SelectSingleNode("Id")?.Attributes?["value"]?.InnerText ?? string.Empty;
             ApplicationVersionUtils.TryParse(moduleNode?.SelectSingleNode("Version")?.Attributes?["value"]?.InnerText, out var parsedVersion);
@@ -123,7 +134,7 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
                 var subModuleInfo = new SubModuleInfo2();
                 try
                 {
-                    subModuleInfo.LoadFrom(subModuleList[i], Path.Combine(PathPrefix, alias));
+                    subModuleInfo.LoadFrom(subModuleList[i], Path.Combine(PathPrefix, Alias));
                     SubModules.Add(subModuleInfo);
                 }
                 catch { }
@@ -147,13 +158,13 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
                             LoadType = LoadType.NONE,
                             IsOptional = false,
                             IsIncompatible = incompatible,
-                            Version = ApplicationVersion.Empty
+                            Version = ApplicationVersionUtils.GetEmpty()
                         });
                     }
                     else if (dependedModuleMetadatasList[i]?.Attributes["order"] is { } orderAttr && Enum.TryParse<LoadTypeParse>(orderAttr.InnerText, out var order))
                     {
                         var optional = dependedModuleMetadatasList[i]?.Attributes["optional"]?.InnerText.Equals("true") ?? false;
-                        var version = ApplicationVersionUtils.TryParse(dependedModuleMetadatasList[i]?.Attributes["version"]?.InnerText, out var v) ? v : ApplicationVersion.Empty;
+                        var version = ApplicationVersionUtils.TryParse(dependedModuleMetadatasList[i]?.Attributes["version"]?.InnerText, out var v) ? v : ApplicationVersionUtils.GetEmpty();
                         DependedModuleMetadatas.Add(new DependedModuleMetadata
                         {
                             Id = idAttr.InnerText,
@@ -179,7 +190,7 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
                         LoadType = LoadType.NONE,
                         IsOptional = true,
                         IsIncompatible = false,
-                        Version = ApplicationVersion.Empty
+                        Version = ApplicationVersionUtils.GetEmpty()
                     });
                 }
             }
@@ -200,7 +211,7 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
                         LoadType = LoadType.NONE,
                         IsOptional = true,
                         IsIncompatible = false,
-                        Version = ApplicationVersion.Empty
+                        Version = ApplicationVersionUtils.GetEmpty()
                     });
                 }
             }

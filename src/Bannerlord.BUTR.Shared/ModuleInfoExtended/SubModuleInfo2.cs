@@ -55,6 +55,8 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 #endif
     internal sealed class SubModuleInfo2 : IEquatable<SubModuleInfo2>
     {
+        private static readonly string? ConfigName = new DirectoryInfo(Directory.GetCurrentDirectory())?.Name;
+
         public enum SubModuleTags
         {
             RejectedPlatform,
@@ -71,18 +73,17 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 		public string SubModuleClassType { get; internal set; } = string.Empty;
         public List<Tuple<SubModuleTags, string>> Tags { get; internal set; } = new();
 
-		public void LoadFrom(XmlNode subModuleNode, string path)
+		public void LoadFrom(XmlNode subModuleNode, string modulePath)
 		{
             Assemblies.Clear();
 			Tags.Clear();
 			Name = subModuleNode?.SelectSingleNode("Name")?.Attributes["value"]?.InnerText ?? string.Empty;
 			DLLName = subModuleNode?.SelectSingleNode("DLLName")?.Attributes["value"]?.InnerText ?? string.Empty;
-			string text = Path.Combine(path, "bin\\Win64_Shipping_Client", DLLName);
+
 			if (!string.IsNullOrEmpty(DLLName))
-			{
-				DLLExists = File.Exists(text);
-            }
-			SubModuleClassType = subModuleNode?.SelectSingleNode("SubModuleClassType")?.Attributes["value"]?.InnerText ?? string.Empty;
+                DLLExists = File.Exists(Path.Combine(modulePath, "bin", ConfigName ?? "Win64_Shipping_Client", DLLName));
+
+            SubModuleClassType = subModuleNode?.SelectSingleNode("SubModuleClassType")?.Attributes["value"]?.InnerText ?? string.Empty;
 			if (subModuleNode?.SelectSingleNode("Assemblies") != null)
 			{
 				var assembliesList = subModuleNode?.SelectSingleNode("Assemblies")?.SelectNodes("Assembly");

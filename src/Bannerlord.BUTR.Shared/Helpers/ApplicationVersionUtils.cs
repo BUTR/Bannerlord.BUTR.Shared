@@ -44,6 +44,9 @@ namespace Bannerlord.BUTR.Shared.Helpers
 {
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
+    using global::System.Xml;
+    using global::System.Reflection;
+    using global::System.IO;
 
     using global::TaleWorlds.Library;
 
@@ -52,6 +55,45 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #endif
     internal static class ApplicationVersionUtils
     {
+        private static readonly PropertyInfo _emptyProperty = typeof(ApplicationVersion).GetProperty("Empty", BindingFlags.Public | BindingFlags.Static);
+        private static readonly PropertyInfo _applicationVersionTypeProperty = typeof(ApplicationVersion).GetProperty("ApplicationVersionType", BindingFlags.Public | BindingFlags.Instance);
+        private static readonly PropertyInfo _majorProperty = typeof(ApplicationVersion).GetProperty("Major", BindingFlags.Public | BindingFlags.Instance);
+        private static readonly PropertyInfo _minorProperty = typeof(ApplicationVersion).GetProperty("Minor", BindingFlags.Public | BindingFlags.Instance);
+        private static readonly PropertyInfo _revisionProperty = typeof(ApplicationVersion).GetProperty("Revision", BindingFlags.Public | BindingFlags.Instance);
+        private static readonly PropertyInfo _changeSetProperty = typeof(ApplicationVersion).GetProperty("ChangeSet", BindingFlags.Public | BindingFlags.Instance);
+
+        private static string GetPrefix(ApplicationVersionType applicationVersionType) => (int) applicationVersionType switch
+        {
+            0 => "a",
+            1 => "b",
+            2 => "e",
+            3 => "v",
+            4 => "d",
+            5 => "m",
+            _ => "i"
+        };
+        private static ApplicationVersionType ApplicationVersionTypeFromString(string applicationVersionType) => 
+            string.IsNullOrEmpty(applicationVersionType) ? default : ApplicationVersionTypeFromString(applicationVersionType[0]);
+        private static ApplicationVersionType ApplicationVersionTypeFromString(char applicationVersionType) => applicationVersionType switch
+        {
+            'a' => (ApplicationVersionType) 0,
+            'b' => (ApplicationVersionType) 1,
+            'e' => (ApplicationVersionType) 2,
+            'v' => (ApplicationVersionType) 3,
+            'd' => (ApplicationVersionType) 4,
+            'm' => (ApplicationVersionType) 5,
+            _ => (ApplicationVersionType) (int) -1,
+        };
+
+        private static ApplicationVersion FromParametersFile(string versionGameType)
+        {
+            var xmlDocument = new XmlDocument();
+            xmlDocument.LoadXml(VirtualFolders.GetFileContent(Path.Combine(BasePath.Name, "Parameters", "Version.xml")));
+            var versionAsString = xmlDocument?.SelectSingleNode("Version")?.SelectSingleNode(versionGameType)?.Attributes["Value"]?.InnerText;
+            TryParse(versionAsString, out var version);
+            return version;
+        }
+
         public static bool TryParse(string? versionAsString, out ApplicationVersion version)
         {
             var major = 0;
@@ -67,7 +109,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             if (array.Length != 3 && array.Length != 4 && array[0].Length == 0)
                 return false;
 
-            var applicationVersionType = ApplicationVersion.ApplicationVersionTypeFromString(array[0][0].ToString());
+            var applicationVersionType = ApplicationVersionTypeFromString(array[0][0]);
             if (!skipCheck && !int.TryParse(array[0].Substring(1), out major))
             {
                 if (array[0].Substring(1) != "*") return false;
@@ -100,16 +142,24 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 skipCheck = true;
             }
 
-            version = new ApplicationVersion(applicationVersionType, major, minor, revision, changeSet, ApplicationVersionGameType.Singleplayer);
+            object boxed = version;
+            _applicationVersionTypeProperty?.SetValue(boxed, applicationVersionType);
+            _majorProperty?.SetValue(boxed, major);
+            _minorProperty?.SetValue(boxed, minor);
+            _revisionProperty?.SetValue(boxed, revision);
+            _changeSetProperty?.SetValue(boxed, changeSet);
+
             return true;
         }
 
         public static string ToString(ApplicationVersion av)
         {
-            string prefix = ApplicationVersion.GetPrefix(av.ApplicationVersionType);
-            var def = ApplicationVersion.FromParametersFile(ApplicationVersionGameType.Singleplayer);
+            string prefix = GetPrefix(av.ApplicationVersionType);
+            var def = FromParametersFile("Singleplayer");
             return $"{prefix}{av.Major}.{av.Minor}.{av.Revision}{(av.ChangeSet == def.ChangeSet ? "" : $".{av.ChangeSet}")}";
         }
+
+        public static ApplicationVersion GetEmpty() => _emptyProperty?.GetValue(null) is ApplicationVersion av ? av : default;
     }
 }
 

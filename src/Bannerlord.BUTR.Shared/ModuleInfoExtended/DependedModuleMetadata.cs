@@ -45,6 +45,8 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
 
+    using global::Bannerlord.BUTR.Shared.Helpers;
+
     using global::TaleWorlds.Library;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
@@ -65,7 +67,7 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
             LoadType.LoadBeforeThis => "After        ",
             _                       => "ERROR        "
         };
-        private static string GetVersion(ApplicationVersion av) => av.IsSame(ApplicationVersion.Empty) ? "" : $" {av}";
+        private static string GetVersion(ApplicationVersion av) => av.IsSame(ApplicationVersionUtils.GetEmpty()) ? "" : $" {av}";
         private static string GetOptional(bool isOptional) => isOptional ? " Optional" : "";
         private static string GetIncompatible(bool isOptional) => isOptional ? "Incompatible " : "";
         public override string ToString() => GetLoadType(LoadType) + GetIncompatible(IsIncompatible) + Id + GetVersion(Version) + GetOptional(IsOptional);

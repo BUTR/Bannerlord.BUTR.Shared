@@ -48,6 +48,7 @@ namespace Tact.Reflection
 
     using global::System;
     using global::System.Collections.Concurrent;
+    using global::System.Collections.Generic;
     using global::System.Linq;
     using global::System.Linq.Expressions;
     using global::System.Reflection;
@@ -57,12 +58,12 @@ namespace Tact.Reflection
 #endif
     internal sealed class EfficientInvoker
     {
-        private static readonly ConcurrentDictionary<ConstructorInfo, Func<object[], object>> ConstructorToWrapperMap = new();
+        private static readonly ConcurrentDictionary<ConstructorInfo, Func<object[], object>?> ConstructorToWrapperMap = new();
+        private static readonly ConcurrentDictionary<MethodKey, Func<object, object[], object>?> MethodToWrapperMap = new(MethodKeyComparer.Instance);
 
-        public static Func<object[], object> ForConstructor(ConstructorInfo constructor)
+        public static Func<object[], object>? ForConstructor(ConstructorInfo constructor)
         {
-            if (constructor == null)
-                throw new ArgumentNullException(nameof(constructor));
+            if (constructor == null) return null;
 
             return ConstructorToWrapperMap.GetOrAdd(constructor, t =>
             {
@@ -74,6 +75,50 @@ namespace Tact.Reflection
                 var lambda = lambdaExp.Compile();
                 return (Func<object[], object>)lambda;
             });
+        }
+
+        public static Func<object, object[], object>? ForMethod(Type type, string methodName)
+        {
+            if (type == null) return null;
+            if (methodName == null) return null;
+
+            var key = new MethodKey(type, methodName);
+            return MethodToWrapperMap.GetOrAdd(key, k =>
+            {
+                var method = k.Type.GetTypeInfo().GetMethod(k.Name);
+                if (method == null) return null;
+
+                return CreateMethodWrapper(k.Type, method, false);
+            });
+        }
+
+
+        private static Func<object, object[], object> CreateMethodWrapper(Type type, MethodInfo method, bool isDelegate)
+        {
+            CreateParamsExpressions(method, out ParameterExpression argsExp, out Expression[] paramsExps);
+
+            var targetExp = Expression.Parameter(typeof(object), "target");
+            var castTargetExp = Expression.Convert(targetExp, type);
+            var invokeExp = isDelegate
+                ? (Expression)Expression.Invoke(castTargetExp, paramsExps)
+                : Expression.Call(castTargetExp, method, paramsExps);
+
+            LambdaExpression lambdaExp;
+            
+            if (method.ReturnType != typeof(void))
+            {
+                var resultExp = Expression.Convert(invokeExp, typeof(object));
+                lambdaExp = Expression.Lambda(resultExp, targetExp, argsExp);
+            }
+            else
+            {
+                var constExp = Expression.Constant(null, typeof(object));
+                var blockExp = Expression.Block(invokeExp, constExp);
+                lambdaExp = Expression.Lambda(blockExp, targetExp, argsExp);
+            }
+
+            var lambda = lambdaExp.Compile();
+            return (Func<object, object[], object>)lambda;
         }
 
         private static void CreateParamsExpressions(MethodBase method, out ParameterExpression argsExp, out Expression[] paramsExps)
@@ -88,6 +133,31 @@ namespace Tact.Reflection
                 var constExp = Expression.Constant(i, typeof(int));
                 var argExp = Expression.ArrayIndex(argsExp, constExp);
                 paramsExps[i] = Expression.Convert(argExp, parameters[i]);
+            }
+        }
+
+
+        private class MethodKeyComparer : IEqualityComparer<MethodKey>
+        {
+            public static readonly MethodKeyComparer Instance = new MethodKeyComparer();
+
+            public bool Equals(MethodKey x, MethodKey y) => x.Type == y.Type && StringComparer.Ordinal.Equals(x.Name, y.Name);
+
+            public int GetHashCode(MethodKey key) => CombineHashCodes(key.Type.GetHashCode(), key.Name.GetHashCode());
+
+            // From System.Web.Util.HashCodeCombiner
+            private static int CombineHashCodes(int h1, int h2) => ((h1 << 5) + h1) ^ h2;
+        }
+
+        private readonly struct MethodKey
+        {
+            public readonly Type Type;
+            public readonly string Name;
+
+            public MethodKey(Type type, string name)
+            {
+                Type = type;
+                Name = name;
             }
         }
     }
