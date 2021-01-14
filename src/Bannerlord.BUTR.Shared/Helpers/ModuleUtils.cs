@@ -48,30 +48,33 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.Collections.Generic;
     using global::System.Linq;
     using global::System.IO;
+    using global::System.Reflection;
 
     using global::Bannerlord.BUTR.Shared.ModuleInfoExtended;
-
-    using global::Tact.Reflection;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
     internal static class ModuleUtils
     {
-        private static readonly Type _engineUtilitiesType = Type.GetType("TaleWorlds.Engine.Utilities", false);
-        private static readonly Type _moduleHelperType = Type.GetType("TaleWorlds.ModuleManager.ModuleHelper", false);
+        private delegate string[] GetModulesNamesDelegate();
+
+        private static readonly GetModulesNamesDelegate? GetModulesNames;
+
+        private static readonly Type? _moduleHelperType = Type.GetType("TaleWorlds.ModuleManager.ModuleHelper, TaleWorlds.ModuleManager", false);
+        private static readonly FieldInfo? _platformModuleExtensionField = _moduleHelperType?.GetField("_platformModuleExtension");
+
+        static ModuleUtils()
+        {
+            var engineUtilitiesType = Type.GetType("TaleWorlds.Engine.Utilities, TaleWorlds.Engine", false);
+            GetModulesNames = ReflectionHelper.GetDelegate<GetModulesNamesDelegate>(engineUtilitiesType?.GetMethod("GetModulesNames", BindingFlags.Public | BindingFlags.Static));
+        }
 
         public static IEnumerable<ModuleInfo2> GetLoadedModules()
         {
-            if (_engineUtilitiesType == null) yield break;
+            if (GetModulesNames == null) yield break;
 
-            var getModulesNamesInvoker = EfficientInvoker.ForMethod(_moduleHelperType, "GetModulesNames");
-            if (getModulesNamesInvoker == null) yield break;
-
-            var modulePaths = getModulesNamesInvoker.Invoke(null, Array.Empty<object>()) as string[];
-            if (modulePaths == null) yield break;
-
-            foreach (string modulesName in modulePaths)
+            foreach (string modulesName in GetModulesNames())
             {
                 var moduleInfo = new ModuleInfo2();
                 moduleInfo.Load(modulesName);
@@ -115,14 +118,12 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static IEnumerable<ModuleInfo2> GetPlatformModules()
         {
             if (_moduleHelperType == null) yield break;
+            if (_platformModuleExtensionField == null) yield break;
 
-            var platformModuleExtensionField = _moduleHelperType.GetField("_platformModuleExtension");
-            if (platformModuleExtensionField == null) yield break;
-
-            var platformModuleExtension = platformModuleExtensionField.GetValue(null);
+            var platformModuleExtension = _platformModuleExtensionField.GetValue(null);
             if (platformModuleExtension == null) yield break;
 
-            var getModulePathsInvoker = EfficientInvoker.ForMethod(platformModuleExtension.GetType(), "GetModulePaths");
+            var getModulePathsInvoker = platformModuleExtension.GetType().GetMethod("GetModulePaths", BindingFlags.Public | BindingFlags.Instance);
             if (getModulePathsInvoker == null) yield break;
 
             var modulePaths = getModulePathsInvoker.Invoke(platformModuleExtension, Array.Empty<object>()) as string[];

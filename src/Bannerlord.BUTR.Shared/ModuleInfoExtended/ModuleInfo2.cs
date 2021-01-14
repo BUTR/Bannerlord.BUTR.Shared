@@ -158,13 +158,13 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
                             LoadType = LoadType.NONE,
                             IsOptional = false,
                             IsIncompatible = incompatible,
-                            Version = ApplicationVersionUtils.GetEmpty()
+                            Version = ApplicationVersionUtils.Empty
                         });
                     }
                     else if (dependedModuleMetadatasList[i]?.Attributes["order"] is { } orderAttr && Enum.TryParse<LoadTypeParse>(orderAttr.InnerText, out var order))
                     {
                         var optional = dependedModuleMetadatasList[i]?.Attributes["optional"]?.InnerText.Equals("true") ?? false;
-                        var version = ApplicationVersionUtils.TryParse(dependedModuleMetadatasList[i]?.Attributes["version"]?.InnerText, out var v) ? v : ApplicationVersionUtils.GetEmpty();
+                        var version = ApplicationVersionUtils.TryParse(dependedModuleMetadatasList[i]?.Attributes["version"]?.InnerText, out var v) ? v : ApplicationVersionUtils.Empty;
                         DependedModuleMetadatas.Add(new DependedModuleMetadata
                         {
                             Id = idAttr.InnerText,
@@ -190,7 +190,7 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
                         LoadType = LoadType.NONE,
                         IsOptional = true,
                         IsIncompatible = false,
-                        Version = ApplicationVersionUtils.GetEmpty()
+                        Version = ApplicationVersionUtils.Empty
                     });
                 }
             }
@@ -211,7 +211,7 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
                         LoadType = LoadType.NONE,
                         IsOptional = true,
                         IsIncompatible = false,
-                        Version = ApplicationVersionUtils.GetEmpty()
+                        Version = ApplicationVersionUtils.Empty
                     });
                 }
             }

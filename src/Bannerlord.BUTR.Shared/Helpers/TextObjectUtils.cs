@@ -44,11 +44,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 {
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
-
-    using global::System;
     using global::System.Linq;
-
-    using global::Tact.Reflection;
 
     using global::TaleWorlds.Localization;
 
@@ -57,15 +53,94 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #endif
     internal static class TextObjectUtils
     {
-        private static readonly Func<object[], object>? TextObjectInvoker;
+        private delegate TextObject ConstructorDelegate();
 
+        private delegate void SetTextVariableTextObjectDelegate(TextObject instance, string tag, TextObject variable);
+        private delegate TextObject SetTextVariable2TextObjectDelegate(TextObject instance, string tag, TextObject variable);
+
+        private delegate void SetTextVariableTextObjectStringDelegate(TextObject instance, string tag, string variable);
+        private delegate TextObject SetTextVariable2TextObjectStringDelegate(TextObject instance, string tag, string variable);
+
+        private delegate void SetTextVariableTextObjectInt32Delegate(TextObject instance, string tag, int variable);
+        private delegate TextObject SetTextVariable2TextObjectInt32Delegate(TextObject instance, string tag, int variable);
+
+        private delegate void SetTextVariableTextObjectSingleDelegate(TextObject instance, string tag, float variable);
+        private delegate TextObject SetTextVariable2TextObjectSingleDelegate(TextObject instance, string tag, float variable);
+
+        private static readonly ConstructorDelegate? TextObjectConstructor;
+        private static readonly SetTextVariableTextObjectDelegate? SetTextVariableTextObject;
+        private static readonly SetTextVariable2TextObjectDelegate? SetTextVariable2TextObject;
+        private static readonly SetTextVariableTextObjectStringDelegate? SetTextVariableTextObjectString;
+        private static readonly SetTextVariable2TextObjectStringDelegate? SetTextVariable2TextObjectString;
+        private static readonly SetTextVariableTextObjectInt32Delegate? SetTextVariableTextObjectInt32;
+        private static readonly SetTextVariable2TextObjectInt32Delegate? SetTextVariable2TextObjectInt32;
+        private static readonly SetTextVariableTextObjectSingleDelegate? SetTextVariableTextObjectSingle;
+        private static readonly SetTextVariable2TextObjectSingleDelegate? SetTextVariable2TextObjectSingle;
         static TextObjectUtils()
         {
             if (typeof(TextObject).GetConstructors().FirstOrDefault() is { } constructorInfo)
-                TextObjectInvoker = EfficientInvoker.ForConstructor(constructorInfo);
+                TextObjectConstructor = ReflectionHelper.GetDelegate<ConstructorDelegate>(constructorInfo);
+
+            if (typeof(TextObject).GetMethod("SetTextVariable", new[] {typeof(string), typeof(TextObject)}) is { } setTextVariableTO)
+            {
+                SetTextVariableTextObject = ReflectionHelper.GetDelegate<SetTextVariableTextObjectDelegate>(setTextVariableTO);
+                SetTextVariable2TextObject = ReflectionHelper.GetDelegate<SetTextVariable2TextObjectDelegate>(setTextVariableTO);
+            }
+            if (typeof(TextObject).GetMethod("SetTextVariable", new[] {typeof(string), typeof(string)}) is { } setTextVariableStr)
+            {
+                SetTextVariableTextObjectString = ReflectionHelper.GetDelegate<SetTextVariableTextObjectStringDelegate>(setTextVariableStr);
+                SetTextVariable2TextObjectString = ReflectionHelper.GetDelegate<SetTextVariable2TextObjectStringDelegate>(setTextVariableStr);
+            }
+            if (typeof(TextObject).GetMethod("SetTextVariable", new[] {typeof(string), typeof(int)}) is { } setTextVariableInt)
+            {
+                SetTextVariableTextObjectInt32 = ReflectionHelper.GetDelegate<SetTextVariableTextObjectInt32Delegate>(setTextVariableInt);
+                SetTextVariable2TextObjectInt32 = ReflectionHelper.GetDelegate<SetTextVariable2TextObjectInt32Delegate>(setTextVariableInt);
+            }
+            if (typeof(TextObject).GetMethod("SetTextVariable", new[] {typeof(string), typeof(float)}) is { } setTextVariableFloat)
+            {
+                SetTextVariableTextObjectSingle = ReflectionHelper.GetDelegate<SetTextVariableTextObjectSingleDelegate>(setTextVariableFloat);
+                SetTextVariable2TextObjectSingle = ReflectionHelper.GetDelegate<SetTextVariable2TextObjectSingleDelegate>(setTextVariableFloat);
+            }
         }
 
-        public static TextObject? Create(string value) => TextObjectInvoker?.Invoke(new object[] { value, null! }) as TextObject;
+        public static TextObject? Create(string value) => TextObjectConstructor is not null ? TextObjectConstructor() : null;
+
+        public static TextObject SetTextVariable2(this TextObject textObject, string? tag, TextObject? variable)
+        {
+            if (tag is null || variable is null) return textObject;
+            if (SetTextVariableTextObject is not null)
+                SetTextVariableTextObject(textObject, tag, variable);
+            if (SetTextVariable2TextObject is not null)
+                SetTextVariable2TextObject(textObject, tag, variable);
+            return textObject;
+        }
+        public static TextObject SetTextVariable2(this TextObject textObject, string? tag, string? variable)
+        {
+            if (tag is null || variable is null) return textObject;
+            if (SetTextVariableTextObjectString is not null)
+                SetTextVariableTextObjectString(textObject, tag, variable);
+            if (SetTextVariable2TextObjectString is not null)
+                SetTextVariable2TextObjectString(textObject, tag, variable);
+            return textObject;
+        }
+        public static TextObject SetTextVariable2(this TextObject textObject, string? tag, int variable)
+        {
+            if (tag is null) return textObject;
+            if (SetTextVariableTextObjectInt32 is not null)
+                SetTextVariableTextObjectInt32(textObject, tag, variable);
+            if (SetTextVariable2TextObjectInt32 is not null)
+                SetTextVariable2TextObjectInt32(textObject, tag, variable);
+            return textObject;
+        }
+        public static TextObject SetTextVariable2(this TextObject textObject, string? tag, float variable)
+        {
+            if (tag is null) return textObject;
+            if (SetTextVariableTextObjectSingle is not null)
+                SetTextVariableTextObjectSingle(textObject, tag, variable);
+            if (SetTextVariable2TextObjectSingle is not null)
+                SetTextVariable2TextObjectSingle(textObject, tag, variable);
+            return textObject;
+        }
     }
 }
 

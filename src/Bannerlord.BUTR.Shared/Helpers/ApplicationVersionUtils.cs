@@ -55,12 +55,36 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #endif
     internal static class ApplicationVersionUtils
     {
-        private static readonly PropertyInfo _emptyProperty = typeof(ApplicationVersion).GetProperty("Empty", BindingFlags.Public | BindingFlags.Static);
-        private static readonly PropertyInfo _applicationVersionTypeProperty = typeof(ApplicationVersion).GetProperty("ApplicationVersionType", BindingFlags.Public | BindingFlags.Instance);
-        private static readonly PropertyInfo _majorProperty = typeof(ApplicationVersion).GetProperty("Major", BindingFlags.Public | BindingFlags.Instance);
-        private static readonly PropertyInfo _minorProperty = typeof(ApplicationVersion).GetProperty("Minor", BindingFlags.Public | BindingFlags.Instance);
-        private static readonly PropertyInfo _revisionProperty = typeof(ApplicationVersion).GetProperty("Revision", BindingFlags.Public | BindingFlags.Instance);
-        private static readonly PropertyInfo _changeSetProperty = typeof(ApplicationVersion).GetProperty("ChangeSet", BindingFlags.Public | BindingFlags.Instance);
+        private delegate ApplicationVersion GetEmptyDelegate();
+        private static readonly GetEmptyDelegate? GetEmpty;
+
+        private delegate ApplicationVersion SetApplicationVersionTypeDelegate(ApplicationVersion instance, ApplicationVersionType applicationVersionType);
+        private static readonly SetApplicationVersionTypeDelegate? SetApplicationVersionType;
+        
+        private delegate ApplicationVersion SetMajorDelegate(ApplicationVersion instance, int major);
+        private static readonly SetMajorDelegate? SetMajor;
+        
+        private delegate ApplicationVersion SetMinorDelegate(ApplicationVersion instance, int minor);
+        private static readonly SetMinorDelegate? SetMinor;
+        
+        private delegate ApplicationVersion SetRevisionDelegate(ApplicationVersion instance, int revision);
+        private static readonly SetRevisionDelegate? SetRevision;
+        
+        private delegate ApplicationVersion SetChangeSetDelegate(ApplicationVersion instance, int changeSet);
+        private static readonly SetChangeSetDelegate? SetChangeSet;
+
+        public static ApplicationVersion Empty => GetEmpty is not null ? GetEmpty() : default;
+
+        static ApplicationVersionUtils()
+        {
+            GetEmpty = ReflectionHelper.GetDelegate<GetEmptyDelegate>(typeof(ApplicationVersion).GetProperty("Empty", BindingFlags.Public | BindingFlags.Static)?.GetMethod);
+            
+            SetApplicationVersionType = ReflectionHelper.GetDelegate<SetApplicationVersionTypeDelegate>(typeof(ApplicationVersion).GetProperty("ApplicationVersionType", BindingFlags.Public | BindingFlags.Static)?.SetMethod);
+            SetMajor = ReflectionHelper.GetDelegate<SetMajorDelegate>(typeof(ApplicationVersion).GetProperty("Major", BindingFlags.Public | BindingFlags.Static)?.SetMethod);
+            SetMinor = ReflectionHelper.GetDelegate<SetMinorDelegate>(typeof(ApplicationVersion).GetProperty("Minor", BindingFlags.Public | BindingFlags.Static)?.SetMethod);
+            SetRevision = ReflectionHelper.GetDelegate<SetRevisionDelegate>(typeof(ApplicationVersion).GetProperty("Revision", BindingFlags.Public | BindingFlags.Static)?.SetMethod);
+            SetChangeSet = ReflectionHelper.GetDelegate<SetChangeSetDelegate>(typeof(ApplicationVersion).GetProperty("ChangeSet", BindingFlags.Public | BindingFlags.Static)?.SetMethod);
+        }
 
         private static string GetPrefix(ApplicationVersionType applicationVersionType) => (int) applicationVersionType switch
         {
@@ -142,12 +166,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 skipCheck = true;
             }
 
-            object boxed = version;
-            _applicationVersionTypeProperty?.SetValue(boxed, applicationVersionType);
-            _majorProperty?.SetValue(boxed, major);
-            _minorProperty?.SetValue(boxed, minor);
-            _revisionProperty?.SetValue(boxed, revision);
-            _changeSetProperty?.SetValue(boxed, changeSet);
+            if (SetApplicationVersionType is not null) SetApplicationVersionType(version, applicationVersionType);
+            if (SetMajor is not null) SetMajor(version, major);
+            if (SetMinor is not null) SetMinor(version, minor);
+            if (SetRevision is not null) SetRevision(version, revision);
+            if (SetChangeSet is not null) SetChangeSet(version, changeSet);
 
             return true;
         }
@@ -158,8 +181,6 @@ namespace Bannerlord.BUTR.Shared.Helpers
             var def = FromParametersFile("Singleplayer");
             return $"{prefix}{av.Major}.{av.Minor}.{av.Revision}{(av.ChangeSet == def.ChangeSet ? "" : $".{av.ChangeSet}")}";
         }
-
-        public static ApplicationVersion GetEmpty() => _emptyProperty?.GetValue(null) is ApplicationVersion av ? av : default;
     }
 }
 

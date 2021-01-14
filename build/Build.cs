@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -15,6 +16,15 @@ using static Nuke.Common.Tools.NuGet.NuGetTasks;
 class Build : NukeBuild
 {
     public static int Main () => Execute<Build>(x => x.Pack);
+
+    string Version
+    {
+        get
+        {
+            var env = Environment.GetEnvironmentVariable("GITHUB_RUN_NUMBER");
+            return $"1.5.1.{(string.IsNullOrEmpty(env) ? "0" : env)}";
+        }
+    }
 
     [Solution] readonly Solution Solution;
 
@@ -93,6 +103,7 @@ class Build : NukeBuild
             NuGetPack(s => s
                 .SetTargetPath(NuspecFile.FullName)
                 .SetBasePath(OutDirectory.FullName)
-                .SetOutputDirectory(ArtifactsDirectory.FullName));
+                .SetOutputDirectory(ArtifactsDirectory.FullName)
+                .SetVersion(Version));
         });
 }

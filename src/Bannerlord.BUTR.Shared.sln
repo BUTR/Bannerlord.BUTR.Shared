@@ -6,6 +6,7 @@ MinimumVisualStudioVersion = 15.0.26124.0
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".Config", ".Config", "{CA94F8B9-B786-4737-B21A-FD4D2AE5D9E0}"
 	ProjectSection(SolutionItems) = preProject
 		Bannerlord.BUTR.Shared.nuspec = Bannerlord.BUTR.Shared.nuspec
+		..\.github\workflows\publish.yml = ..\.github\workflows\publish.yml
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "_build", "..\build\_build.csproj", "{012F7F51-BEC6-4FCC-BF9A-87BDECFAEDC4}"
