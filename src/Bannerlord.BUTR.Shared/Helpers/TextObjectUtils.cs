@@ -40,7 +40,7 @@
 #nullable enable
 #pragma warning disable
 
-namespace Bannerlord.BUTR.Shared
+namespace Bannerlord.BUTR.Shared.Helpers
 {
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;

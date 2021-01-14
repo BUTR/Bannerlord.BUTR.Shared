@@ -40,7 +40,7 @@
 #nullable enable
 #pragma warning disable
 
-namespace Bannerlord.BUTR.Shared
+namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 {
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
@@ -51,6 +51,8 @@ namespace Bannerlord.BUTR.Shared
     using global::System.Linq;
     using global::System.Xml;
     
+    using global::Bannerlord.BUTR.Shared.Helpers;
+
     using global::TaleWorlds.Library;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
