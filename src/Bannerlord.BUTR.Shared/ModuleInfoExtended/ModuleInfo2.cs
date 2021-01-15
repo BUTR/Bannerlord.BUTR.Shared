@@ -68,7 +68,6 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
         public string Name { get; internal set; } = string.Empty;
         public bool IsOfficial { get; internal set; }
         public ApplicationVersion Version { get; internal set; }
-        public string Alias { get; internal set; } = string.Empty;
         public bool IsSingleplayerModule { get; internal set; }
         public bool IsMultiplayerModule { get; internal set; }
         public bool IsSelected { get; set; }
@@ -100,8 +99,7 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
             DependedModuleMetadatas.Clear();
 
             var moduleNode = xmlDocument.SelectSingleNode("Module");
-
-            Alias = moduleNode?.SelectSingleNode("Alias")?.Attributes?["value"]?.InnerText ?? string.Empty;
+            
             Name = moduleNode?.SelectSingleNode("Name")?.Attributes?["value"]?.InnerText ?? string.Empty;
             Id = moduleNode?.SelectSingleNode("Id")?.Attributes?["value"]?.InnerText ?? string.Empty;
             ApplicationVersionUtils.TryParse(moduleNode?.SelectSingleNode("Version")?.Attributes?["value"]?.InnerText, out var parsedVersion);
@@ -134,7 +132,7 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
                 var subModuleInfo = new SubModuleInfo2();
                 try
                 {
-                    subModuleInfo.LoadFrom(subModuleList[i], Path.Combine(PathPrefix, Alias));
+                    subModuleInfo.LoadFrom(subModuleList[i], Path.Combine(PathPrefix, Id));
                     SubModules.Add(subModuleInfo);
                 }
                 catch { }
