@@ -151,7 +151,7 @@ namespace Bannerlord.ButterLib.Common.Helpers
             
             Name = moduleNode?.SelectSingleNode("Name")?.Attributes?["value"]?.InnerText ?? string.Empty;
             Id = moduleNode?.SelectSingleNode("Id")?.Attributes?["value"]?.InnerText ?? string.Empty;
-            ApplicationVersionUtils.TryParse(moduleNode?.SelectSingleNode("Version")?.Attributes?["value"]?.InnerText, out var parsedVersion);
+            ApplicationVersionHelper.TryParse(moduleNode?.SelectSingleNode("Version")?.Attributes?["value"]?.InnerText, out var parsedVersion);
             Version = parsedVersion;
 
             IsOfficial = moduleNode?.SelectSingleNode("Official")?.Attributes?["value"]?.InnerText?.Equals("true") == true;
@@ -165,7 +165,7 @@ namespace Bannerlord.ButterLib.Common.Helpers
             {
                 if (dependedModulesList[i]?.Attributes["Id"] is { } idAttr)
                 {
-                    ApplicationVersionUtils.TryParse(dependedModulesList[i]?.Attributes?["DependentVersion"]?.InnerText, out var version);
+                    ApplicationVersionHelper.TryParse(dependedModulesList[i]?.Attributes?["DependentVersion"]?.InnerText, out var version);
                     DependedModules.Add(new DependedModule
                     {
                         ModuleId = idAttr.InnerText,
@@ -209,13 +209,13 @@ namespace Bannerlord.ButterLib.Common.Helpers
                             LoadType = LoadType.NONE,
                             IsOptional = false,
                             IsIncompatible = incompatible,
-                            Version = ApplicationVersionUtils.Empty
+                            Version = ApplicationVersionHelper.Empty
                         });
                     }
                     else if (dependedModuleMetadatasList[i]?.Attributes["order"] is { } orderAttr && Enum.TryParse<LoadTypeParse>(orderAttr.InnerText, out var order))
                     {
                         var optional = dependedModuleMetadatasList[i]?.Attributes["optional"]?.InnerText.Equals("true") ?? false;
-                        var version = ApplicationVersionUtils.TryParse(dependedModuleMetadatasList[i]?.Attributes["version"]?.InnerText, out var v) ? v : ApplicationVersionUtils.Empty;
+                        var version = ApplicationVersionHelper.TryParse(dependedModuleMetadatasList[i]?.Attributes["version"]?.InnerText, out var v) ? v : ApplicationVersionHelper.Empty;
                         DependedModuleMetadatas.Add(new DependedModuleMetadata
                         {
                             Id = idAttr.InnerText,
@@ -241,7 +241,7 @@ namespace Bannerlord.ButterLib.Common.Helpers
                         LoadType = LoadType.NONE,
                         IsOptional = true,
                         IsIncompatible = false,
-                        Version = ApplicationVersionUtils.Empty
+                        Version = ApplicationVersionHelper.Empty
                     });
                 }
             }
@@ -262,7 +262,7 @@ namespace Bannerlord.ButterLib.Common.Helpers
                         LoadType = LoadType.NONE,
                         IsOptional = true,
                         IsIncompatible = false,
-                        Version = ApplicationVersionUtils.Empty
+                        Version = ApplicationVersionHelper.Empty
                     });
                 }
             }
@@ -270,7 +270,7 @@ namespace Bannerlord.ButterLib.Common.Helpers
             var requiredGameVersion = moduleNode?.SelectSingleNode("RequiredGameVersion");
             var requiredGameVersionVal = requiredGameVersion?.Attributes?["value"]?.InnerText ?? string.Empty;
             var requiredGameVersionOptional = requiredGameVersion?.Attributes?["optional"]?.InnerText?.Equals("true") == true;
-            if (!string.IsNullOrWhiteSpace(requiredGameVersionVal) && ApplicationVersionUtils.TryParse(requiredGameVersionVal, out var gameVersion))
+            if (!string.IsNullOrWhiteSpace(requiredGameVersionVal) && ApplicationVersionHelper.TryParse(requiredGameVersionVal, out var gameVersion))
             {
                 foreach (var moduleId in OfficialModuleIds)
                 {

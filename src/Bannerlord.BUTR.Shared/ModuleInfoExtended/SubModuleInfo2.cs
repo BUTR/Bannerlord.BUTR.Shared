@@ -86,7 +86,7 @@ namespace Bannerlord.ButterLib.Common.Helpers
             {
                 foreach (var (key, value) in subModuleInfo.Tags)
                 {
-                    if (!ModuleUtils.GetSubModuleTagValiditiy(key, value))
+                    if (!ModuleInfoHelper.GetSubModuleTagValiditiy(key, value))
                     {
                         return false;
                     }

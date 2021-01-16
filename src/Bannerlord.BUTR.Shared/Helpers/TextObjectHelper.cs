@@ -58,7 +58,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-    internal static class TextObjectUtils
+    internal static class TextObjectHelper
     {
         private delegate TextObject ConstructorDelegate();
 
@@ -86,7 +86,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static readonly SetTextVariableTextObjectSingleDelegate? SetTextVariableTextObjectSingle;
         private static readonly SetTextVariable2TextObjectSingleDelegate? SetTextVariable2TextObjectSingle;
         private static readonly SetTextVariableFromObjectDelegate? SetTextVariableFromObject;
-        static TextObjectUtils()
+
+        static TextObjectHelper()
         {
             if (typeof(TextObject).GetConstructors().FirstOrDefault() is { } constructorInfo)
                 TextObjectConstructor = ReflectionHelper.GetDelegate<ConstructorDelegate>(constructorInfo);

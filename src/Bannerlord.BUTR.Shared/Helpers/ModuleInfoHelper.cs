@@ -61,7 +61,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-    internal static class ModuleUtils
+    internal static class ModuleInfoHelper
     {
         private delegate string[] GetModulesNamesDelegate();
 
@@ -76,7 +76,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static readonly GetSubModuleValiditiyDelegate? GetSubModuleValiditiy;
         private static readonly GetCurrentModuleDelegate? GetCurrentModule;
 
-        static ModuleUtils()
+        static ModuleInfoHelper()
         {
             var engineUtilitiesType =
                 Type.GetType("TaleWorlds.Engine.Utilities, TaleWorlds.Engine", false);

@@ -93,7 +93,7 @@ namespace Bannerlord.ButterLib.Common.Helpers
             LoadType.LoadBeforeThis => "After        ",
             _                       => "ERROR        "
         };
-        private static string GetVersion(ApplicationVersion av) => av.IsSame(ApplicationVersionUtils.Empty) ? "" : $" {av}";
+        private static string GetVersion(ApplicationVersion av) => av.IsSame(ApplicationVersionHelper.Empty) ? "" : $" {av}";
         private static string GetOptional(bool isOptional) => isOptional ? " Optional" : "";
         private static string GetIncompatible(bool isOptional) => isOptional ? "Incompatible " : "";
         public override string ToString() => GetLoadType(LoadType) + GetIncompatible(IsIncompatible) + Id + GetVersion(Version) + GetOptional(IsOptional);

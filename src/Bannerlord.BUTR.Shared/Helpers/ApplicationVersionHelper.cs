@@ -53,7 +53,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-    internal static class ApplicationVersionUtils
+    internal static class ApplicationVersionHelper
     {
         private delegate ApplicationVersion GetEmptyDelegate();
         private static readonly GetEmptyDelegate? GetEmpty;
@@ -75,7 +75,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static ApplicationVersion Empty => GetEmpty is not null ? GetEmpty() : default;
 
-        static ApplicationVersionUtils()
+        static ApplicationVersionHelper()
         {
             GetEmpty = ReflectionHelper.GetDelegate<GetEmptyDelegate>(typeof(ApplicationVersion).GetProperty("Empty", BindingFlags.Public | BindingFlags.Static)?.GetMethod);
             
