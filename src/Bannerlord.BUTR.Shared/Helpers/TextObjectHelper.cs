@@ -122,8 +122,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static TextObject? Create(string value)
         {
-            var textObject = FormatterServices.GetUninitializedObject(typeof(TextObject));
-            ValueField?.SetValue(textObject, value);
+            if (FormatterServices.GetUninitializedObject(typeof(TextObject)) is TextObject textObject)
+            {
+                ValueField?.SetValue(textObject, value);
+                return textObject;
+            }
             return null;
         }
         public static TextObject? Create(int value)=> Create(value.ToString());
