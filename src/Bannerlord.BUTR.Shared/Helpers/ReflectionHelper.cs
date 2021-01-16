@@ -45,6 +45,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
     using global::System;
+    using global::System.Collections.Generic;
     using global::System.Linq;
     using global::System.Linq.Expressions;
     using global::System.Reflection;
@@ -64,6 +65,21 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static TDelegate? GetDelegate<TDelegate>(MethodInfo? methodInfo) where TDelegate : Delegate
             => methodInfo is null ? null : Delegate.CreateDelegate(typeof(TDelegate), methodInfo) as TDelegate;
+
+        public static TDelegate? GetDelegateObjectInstance<TDelegate>(MethodInfo? methodInfo) where TDelegate : Delegate
+        {
+            if (methodInfo?.DeclaringType is null) return null;
+
+            var instance = Expression.Parameter(typeof(object), "instance");
+            var parameters = methodInfo.GetParameters().Select((t2, i) => Expression.Parameter(t2.ParameterType, $"p{i}")).ToList();
+
+            var body = Expression.Call(
+                Expression.Convert(instance, methodInfo.DeclaringType),
+                methodInfo,
+                parameters);
+
+            return Expression.Lambda<TDelegate>(body, new List<ParameterExpression> { instance }.Concat(parameters)).Compile();
+        }
     }
 }
 

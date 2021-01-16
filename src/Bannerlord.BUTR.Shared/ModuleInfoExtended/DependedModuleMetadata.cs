@@ -40,7 +40,11 @@
 #nullable enable
 #pragma warning disable
 
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
 namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
+#else
+namespace Bannerlord.ButterLib.Common.Helpers
+#endif
 {
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
@@ -52,7 +56,7 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-#if !BANNERLORDBUTRSHARED_PUBLIC_MODULEINFO
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
     internal 
 #else
     public
@@ -64,6 +68,23 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
         public bool IsOptional { get; init; }
         public bool IsIncompatible { get; init; }
         public ApplicationVersion Version { get; init; }
+
+        public DependedModuleMetadata(string id, LoadType loadType, bool isOptional, ApplicationVersion version)
+        {
+            Id = id;
+            LoadType = loadType;
+            IsOptional = isOptional;
+            IsIncompatible = false;
+            Version = version;
+        }
+        public DependedModuleMetadata(string id, LoadType loadType, bool isOptional, bool isIncompatible, ApplicationVersion version)
+        {
+            Id = id;
+            LoadType = loadType;
+            IsOptional = isOptional;
+            IsIncompatible = isIncompatible;
+            Version = version;
+        }
 
         internal static string GetLoadType(LoadType loadType) => loadType switch
         {

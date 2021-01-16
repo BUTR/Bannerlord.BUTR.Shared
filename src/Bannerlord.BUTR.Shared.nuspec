@@ -21,6 +21,7 @@ Contains shared code fot BUTR projects.
   </metadata>
   <files>
     <!-- TFMs not supporting IsExternalInit and supporting ExcludeFromCodeCoverage. -->
+    <file src="ExcludeFromCodeCoverage/DictionaryExtensions.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/Extensions/DictionaryExtensions.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/ApplicationVersionUtils.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/ApplicationVersionUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/ModuleUtils.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/ModuleUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/ReflectionHelper.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/ReflectionHelper.cs.pp"/>
@@ -31,6 +32,7 @@ Contains shared code fot BUTR projects.
     <file src="ExcludeFromCodeCoverage/ModuleInfo2.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/ModuleInfoExtended/ModuleInfo2.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/SubModuleInfo2.cs.pp" target="contentFiles/cs/netstandard2.0/Bannerlord.BUTR.Shared/ModuleInfoExtended/SubModuleInfo2.cs.pp"/>
 
+    <file src="ExcludeFromCodeCoverage/DictionaryExtensions.cs.pp" target="content/cs/netstandard2.0/Bannerlord.BUTR.Shared/Extensions/DictionaryExtensions.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/ApplicationVersionUtils.cs.pp" target="content/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/ApplicationVersionUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/ModuleUtils.cs.pp" target="content/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/ModuleUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/ReflectionHelper.cs.pp" target="content/cs/netstandard2.0/Bannerlord.BUTR.Shared/Helpers/ReflectionHelper.cs.pp"/>
@@ -42,6 +44,7 @@ Contains shared code fot BUTR projects.
     <file src="ExcludeFromCodeCoverage/SubModuleInfo2.cs.pp" target="content/cs/netstandard2.0/Bannerlord.BUTR.Shared/ModuleInfoExtended/SubModuleInfo2.cs.pp"/>
 
 
+    <file src="ExcludeFromCodeCoverage/DictionaryExtensions.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/Extensions/DictionaryExtensions.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/ApplicationVersionUtils.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/Helpers/ApplicationVersionUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/ModuleUtils.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/Helpers/ModuleUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/ReflectionHelper.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/Helpers/ReflectionHelper.cs.pp"/>
@@ -52,6 +55,7 @@ Contains shared code fot BUTR projects.
     <file src="ExcludeFromCodeCoverage/ModuleInfo2.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/ModuleInfoExtended/ModuleInfo2.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/SubModuleInfo2.cs.pp" target="contentFiles/cs/net472/Bannerlord.BUTR.Shared/ModuleInfoExtended/SubModuleInfo2.cs.pp"/>
 
+    <file src="ExcludeFromCodeCoverage/DictionaryExtensions.cs.pp" target="content/cs/net472/Bannerlord.BUTR.Shared/Extensions/DictionaryExtensions.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/ApplicationVersionUtils.cs.pp" target="content/cs/net472/Bannerlord.BUTR.Shared/Helpers/ApplicationVersionUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/ModuleUtils.cs.pp" target="content/cs/net472/Bannerlord.BUTR.Shared/Helpers/ModuleUtils.cs.pp"/>
     <file src="ExcludeFromCodeCoverage/ReflectionHelper.cs.pp" target="content/cs/net472/Bannerlord.BUTR.Shared/Helpers/ReflectionHelper.cs.pp"/>

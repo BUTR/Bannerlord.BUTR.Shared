@@ -40,27 +40,59 @@
 #nullable enable
 #pragma warning disable
 
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
 namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
+#else
+namespace Bannerlord.ButterLib.Common.Helpers
+#endif
 {
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
+    using SubModuleInfo_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.SubModuleInfo2;
+    using ModuleInfo_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.ModuleInfo2;
+#else
+    using SubModuleInfo_ = global::Bannerlord.ButterLib.Common.Helpers.ExtendedSubModuleInfo;
+    using ModuleInfo_ = global::Bannerlord.ButterLib.Common.Helpers.ExtendedModuleInfo;
+#endif
+
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
 
     using global::System;
     using global::System.Collections.Generic;
     using global::System.IO;
+    using global::System.Linq;
     using global::System.Xml;
+
+    using global::Bannerlord.BUTR.Shared.Extensions;
+    using global::Bannerlord.BUTR.Shared.Helpers;
+
+    using global::TaleWorlds.MountAndBlade;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-#if !BANNERLORDBUTRSHARED_PUBLIC_MODULEINFO
-    internal sealed
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
+    internal sealed class SubModuleInfo2 : IEquatable<SubModuleInfo2>
 #else
-    public
+    public sealed class ExtendedSubModuleInfo : IEquatable<ExtendedSubModuleInfo>
 #endif
-    class SubModuleInfo2 : IEquatable<SubModuleInfo2>
     {
         private static readonly string? ConfigName = new DirectoryInfo(Directory.GetCurrentDirectory())?.Name;
+
+        private static bool CheckIfSubmoduleCanBeLoadable(SubModuleInfo_ subModuleInfo)
+        {
+            if (subModuleInfo.Tags.Count > 0)
+            {
+                foreach (var (key, value) in subModuleInfo.Tags)
+                {
+                    if (!ModuleUtils.GetSubModuleTagValiditiy(key, value))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
+        }
 
         public enum SubModuleTags
         {
@@ -76,7 +108,10 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 		public bool DLLExists { get; internal set; }
 		public List<string> Assemblies { get; internal set; } = new();
 		public string SubModuleClassType { get; internal set; } = string.Empty;
-        public List<Tuple<SubModuleTags, string>> Tags { get; internal set; } = new();
+        public Dictionary<SubModuleTags, string> Tags { get; internal set; } = new();
+
+        public MBSubModuleBase? SubModuleInstance { get; private set; }
+        public bool IsLoadable { get; private set; }
 
 		public void LoadFrom(XmlNode subModuleNode, string modulePath)
 		{
@@ -104,26 +139,26 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 			{
                 if (tagsList[i]?.Attributes["key"]?.InnerText is { } key && tagsList[i]?.Attributes["value"]?.InnerText is { } value && Enum.TryParse<SubModuleTags>(key, out var subModuleTags))
 				{
-                    Tags.Add(new Tuple<SubModuleTags, string>(subModuleTags, value));
+                    Tags.Add(subModuleTags, value);
                 }
 			}
+
+            SubModuleInstance = Module.CurrentModule.SubModules.FirstOrDefault(s => s.GetType().FullName.Equals(SubModuleClassType, StringComparison.OrdinalIgnoreCase));
+            IsLoadable = CheckIfSubmoduleCanBeLoadable(this);
 		}
 
-        public override string ToString() => Name;
+        public override string ToString() => $"{Name} - {DLLName}";
 
-        public bool Equals(SubModuleInfo2? other)
+        public bool Equals(SubModuleInfo_? other)
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return Name == other.Name;
         }
-        public override bool Equals(object? obj) =>
-            ReferenceEquals(this, obj) || (obj is SubModuleInfo2 other && Equals(other));
-
+        public override bool Equals(object? obj) => ReferenceEquals(this, obj) || (obj is SubModuleInfo_ other && Equals(other)); 
         public override int GetHashCode() => Name.GetHashCode();
-
-        public static bool operator ==(SubModuleInfo2? left, SubModuleInfo2? right) => Equals(left, right);
-        public static bool operator !=(SubModuleInfo2? left, SubModuleInfo2? right) => !Equals(left, right);
+        public static bool operator ==(SubModuleInfo_? left, SubModuleInfo_? right) => Equals(left, right);
+        public static bool operator !=(SubModuleInfo_? left, SubModuleInfo_? right) => !Equals(left, right);
     }
 }
 

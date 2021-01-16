@@ -42,6 +42,14 @@
 
 namespace Bannerlord.BUTR.Shared.Helpers
 {
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
+    using SubModuleInfo_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.SubModuleInfo2;
+    using ModuleInfo_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.ModuleInfo2;
+#else
+    using SubModuleInfo_ = global::Bannerlord.ButterLib.Common.Helpers.ExtendedSubModuleInfo;
+    using ModuleInfo_ = global::Bannerlord.ButterLib.Common.Helpers.ExtendedModuleInfo;
+#endif
+
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
     using global::System;
@@ -64,10 +72,23 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static readonly Type? _moduleHelperType = Type.GetType("TaleWorlds.ModuleManager.ModuleHelper, TaleWorlds.ModuleManager", false);
         private static readonly FieldInfo? _platformModuleExtensionField = _moduleHelperType?.GetField("_platformModuleExtension");
 
+        private delegate bool GetSubModuleValiditiyDelegate(object instance, SubModuleInfo_.SubModuleTags tag, string value);
+        private delegate object GetCurrentModuleDelegate();
+        private static readonly Type? _moduleType = Type.GetType("TaleWorlds.MountAndBlade.Module, TaleWorlds.MountAndBlade", false);
+        private static readonly GetSubModuleValiditiyDelegate? GetSubModuleValiditiy;
+        private static readonly GetCurrentModuleDelegate? GetCurrentModule;
+
         static ModuleUtils()
         {
-            var engineUtilitiesType = Type.GetType("TaleWorlds.Engine.Utilities, TaleWorlds.Engine", false);
-            GetModulesNames = ReflectionHelper.GetDelegate<GetModulesNamesDelegate>(engineUtilitiesType?.GetMethod("GetModulesNames", BindingFlags.Public | BindingFlags.Static));
+            var engineUtilitiesType =
+                Type.GetType("TaleWorlds.Engine.Utilities, TaleWorlds.Engine", false);
+            GetModulesNames =
+                ReflectionHelper.GetDelegate<GetModulesNamesDelegate>(engineUtilitiesType?.GetMethod("GetModulesNames", BindingFlags.Public | BindingFlags.Static));
+
+            GetCurrentModule =
+                ReflectionHelper.GetDelegate<GetCurrentModuleDelegate>(_moduleType?.GetProperty("CurrentModule", BindingFlags.Public | BindingFlags.Static)?.GetMethod);
+            GetSubModuleValiditiy =
+                ReflectionHelper.GetDelegateObjectInstance<GetSubModuleValiditiyDelegate>(_moduleType.GetMethod("GetSubModuleValiditiy"));
         }
 
         public static IEnumerable<ModuleInfo2> GetLoadedModules()
@@ -141,7 +162,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
         }
 
-        private static IEnumerable<string> GetModulePaths(string directoryPath, int searchDepth)
+        internal static IEnumerable<string> GetModulePaths(string directoryPath, int searchDepth)
         {
             if (searchDepth > 0)
             {
@@ -157,6 +178,14 @@ namespace Bannerlord.BUTR.Shared.Helpers
             {
                 yield return path;
             }
+        }
+
+        internal static bool GetSubModuleTagValiditiy(SubModuleInfo_.SubModuleTags tag, string value)
+        {
+            if (GetSubModuleValiditiy is null || GetCurrentModule is null || GetCurrentModule() is not { } instance)
+                return true;
+
+            return GetSubModuleValiditiy(instance, tag, value);
         }
     }
 }

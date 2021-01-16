@@ -40,8 +40,20 @@
 #nullable enable
 #pragma warning disable
 
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
 namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
+#else
+namespace Bannerlord.ButterLib.Common.Helpers
+#endif
 {
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
+    using SubModuleInfo_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.SubModuleInfo2;
+    using ModuleInfo_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.ModuleInfo2;
+#else
+    using SubModuleInfo_ = global::Bannerlord.ButterLib.Common.Helpers.ExtendedSubModuleInfo;
+    using ModuleInfo_ = global::Bannerlord.ButterLib.Common.Helpers.ExtendedModuleInfo;
+#endif
+
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
 
@@ -58,42 +70,63 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-#if !BANNERLORDBUTRSHARED_PUBLIC_MODULEINFO
-    internal sealed 
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
+    internal sealed class ModuleInfo2 : IEquatable<ModuleInfo2>
 #else
-    public
+    public sealed class ExtendedModuleInfo : IEquatable<ExtendedModuleInfo>
 #endif
-    class ModuleInfo2 : IEquatable<ModuleInfo2>
     {
         private static string NativeModuleId = "Native";
         private static string[] OfficialModuleIds = { NativeModuleId, "SandBox", "SandBoxCore", "StoryMode", "CustomBattle" };
         public static string PathPrefix => Path.Combine(BasePath.Name, "Modules");
 
+        public static string GetPath(string id) => Path.Combine(PathPrefix, id, "SubModule.xml");
+
+#if BANNERLORDBUTRSHARED_BUTTERLIB
+        public static IEnumerable<ModuleInfo_> GetExtendedModules()
+        {
+            foreach (var path in ModuleUtils.GetModulePaths(System.IO.Path.Combine(BasePath.Name, "Modules"), 1).ToArray())
+            {
+                var moduleInfo = new ModuleInfo_();
+                try { moduleInfo.Load(System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(path))); }
+                catch (Exception) { continue; }
+
+                yield return moduleInfo;
+            }
+        }
+#endif
+
         public string Id { get; internal set; } = string.Empty;
+        [Obsolete("Use Id!", true)] public string Alias => Id;
         public string Name { get; internal set; } = string.Empty;
         public bool IsOfficial { get; internal set; }
         public ApplicationVersion Version { get; internal set; }
         public bool IsSingleplayerModule { get; internal set; }
         public bool IsMultiplayerModule { get; internal set; }
         public bool IsSelected { get; set; }
-        public List<SubModuleInfo2> SubModules { get; internal set; } = new();
+        public List<SubModuleInfo_> SubModules { get; internal set; } = new();
         public List<DependedModule> DependedModules { get; internal set; } = new();
 
         public string Url { get; internal set; } = string.Empty;
-
         public List<DependedModuleMetadata> DependedModuleMetadatas { get; internal set; }  = new();
 
-        public void Load(string alias)
+        public string XmlPath { get; private set; } = string.Empty;
+        public string Folder { get; private set; } = string.Empty;
+
+        public void Load(string id)
         {
+            XmlPath = GetPath(id);
+            Folder = Path.GetDirectoryName(XmlPath)!;
             var xmlDocument = new XmlDocument();
-            xmlDocument.Load(Path.Combine(PathPrefix, alias, "SubModule.xml"));
+            xmlDocument.Load(XmlPath);
             Load(xmlDocument);
         }
-
         public void LoadWithFullPath(string fullPath)
         {
+            XmlPath = GetPath(Path.Combine(fullPath, "SubModule.xml"));
+            Folder = Path.GetDirectoryName(XmlPath)!;
             var xmlDocument = new XmlDocument();
-            xmlDocument.Load(Path.Combine(fullPath, "SubModule.xml"));
+            xmlDocument.Load(XmlPath);
             Load(xmlDocument);
         }
 
@@ -134,7 +167,7 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
             var subModuleList = subModules?.SelectNodes("SubModule");
             for (var i = 0; i < subModuleList?.Count; i++)
             {
-                var subModuleInfo = new SubModuleInfo2();
+                var subModuleInfo = new SubModuleInfo_();
                 try
                 {
                     subModuleInfo.LoadFrom(subModuleList[i], Path.Combine(PathPrefix, Id));
@@ -248,19 +281,16 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 
         public override string ToString() => $"{Id} - {Version}";
 
-        public bool Equals(ModuleInfo2? other)
+        public bool Equals(ModuleInfo_? other)
         {
             if (other is null) return false;
             if (ReferenceEquals(this, other)) return true;
             return Id == other.Id;
         }
-        public override bool Equals(object? obj) =>
-            ReferenceEquals(this, obj) || (obj is ModuleInfo2 other && Equals(other));
-
+        public override bool Equals(object? obj) => ReferenceEquals(this, obj) || (obj is ModuleInfo_ other && Equals(other));
         public override int GetHashCode() => Id.GetHashCode();
-
-        public static bool operator ==(ModuleInfo2? left, ModuleInfo2? right) => Equals(left, right);
-        public static bool operator !=(ModuleInfo2? left, ModuleInfo2? right) => !Equals(left, right);
+        public static bool operator ==(ModuleInfo_? left, ModuleInfo_? right) => Equals(left, right);
+        public static bool operator !=(ModuleInfo_? left, ModuleInfo_? right) => !Equals(left, right);
     }
 }
 

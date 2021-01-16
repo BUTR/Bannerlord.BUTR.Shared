@@ -40,7 +40,11 @@
 #nullable enable
 #pragma warning disable
 
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
 namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
+#else
+namespace Bannerlord.ButterLib.Common.Helpers
+#endif
 {
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
@@ -50,7 +54,7 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-#if !BANNERLORDBUTRSHARED_PUBLIC_MODULEINFO
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
     internal
 #else
     public
@@ -59,6 +63,12 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
     {
         public string ModuleId { get; init; }
         public ApplicationVersion Version { get; init; }
+
+        public DependedModule(string moduleId, ApplicationVersion version)
+        {
+            ModuleId = moduleId;
+            Version = version;
+        }
     }
 }
 
