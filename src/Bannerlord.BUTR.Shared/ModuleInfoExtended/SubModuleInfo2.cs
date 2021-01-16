@@ -49,9 +49,11 @@ namespace Bannerlord.ButterLib.Common.Helpers
 #if !BANNERLORDBUTRSHARED_BUTTERLIB
     using SubModuleInfo_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.SubModuleInfo2;
     using ModuleInfo_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.ModuleInfo2;
+    using global::Bannerlord.BUTR.Shared.Extensions;
 #else
     using SubModuleInfo_ = global::Bannerlord.ButterLib.Common.Helpers.ExtendedSubModuleInfo;
     using ModuleInfo_ = global::Bannerlord.ButterLib.Common.Helpers.ExtendedModuleInfo;
+    using global::Bannerlord.ButterLib.Common.Extensions;
 #endif
 
     using global::System.Diagnostics;
@@ -63,7 +65,6 @@ namespace Bannerlord.ButterLib.Common.Helpers
     using global::System.Linq;
     using global::System.Xml;
 
-    using global::Bannerlord.BUTR.Shared.Extensions;
     using global::Bannerlord.BUTR.Shared.Helpers;
 
     using global::TaleWorlds.MountAndBlade;

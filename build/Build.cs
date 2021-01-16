@@ -22,7 +22,7 @@ class Build : NukeBuild
         get
         {
             var env = Environment.GetEnvironmentVariable("GITHUB_RUN_NUMBER");
-            return $"1.6.0.{(string.IsNullOrEmpty(env) ? "0" : env)}";
+            return $"1.6.1.{(string.IsNullOrEmpty(env) ? "0" : env)}";
         }
     }
 

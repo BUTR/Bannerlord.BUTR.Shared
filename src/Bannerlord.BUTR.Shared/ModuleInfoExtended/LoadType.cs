@@ -58,12 +58,7 @@ namespace Bannerlord.ButterLib.Common.Helpers
         LoadBeforeThis = 2
     }
 
-#if !BANNERLORDBUTRSHARED_BUTTERLIB
-    internal
-#else
-    public
-#endif
-    enum LoadTypeParse
+    internal enum LoadTypeParse
     {
         LoadAfterThis  = 1,
         LoadBeforeThis = 2

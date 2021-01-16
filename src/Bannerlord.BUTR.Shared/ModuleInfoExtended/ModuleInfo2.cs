@@ -97,14 +97,20 @@ namespace Bannerlord.ButterLib.Common.Helpers
 #endif
 
         public string Id { get; internal set; } = string.Empty;
+#if BANNERLORDBUTRSHARED_BUTTERLIB
         [Obsolete("Use Id!", true)] public string Alias => Id;
+#endif
         public string Name { get; internal set; } = string.Empty;
         public bool IsOfficial { get; internal set; }
         public ApplicationVersion Version { get; internal set; }
         public bool IsSingleplayerModule { get; internal set; }
         public bool IsMultiplayerModule { get; internal set; }
         public bool IsSelected { get; set; }
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
         public List<SubModuleInfo_> SubModules { get; internal set; } = new();
+#else
+        public List<SubModuleInfo_> ExtendedSubModules { get; internal set; } = new();
+#endif
         public List<DependedModule> DependedModules { get; internal set; } = new();
 
         public string Url { get; internal set; } = string.Empty;
@@ -132,7 +138,12 @@ namespace Bannerlord.ButterLib.Common.Helpers
 
         public void Load(XmlDocument xmlDocument)
         {
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
             SubModules.Clear();
+#else
+            ExtendedSubModules.Clear();
+#endif
+            
             DependedModules.Clear();
             DependedModuleMetadatas.Clear();
 
@@ -171,7 +182,11 @@ namespace Bannerlord.ButterLib.Common.Helpers
                 try
                 {
                     subModuleInfo.LoadFrom(subModuleList[i], Path.Combine(PathPrefix, Id));
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
                     SubModules.Add(subModuleInfo);
+#else
+                    ExtendedSubModules.Add(subModuleInfo);
+#endif
                 }
                 catch { }
             }

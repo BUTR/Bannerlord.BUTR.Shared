@@ -58,8 +58,6 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.IO;
     using global::System.Reflection;
 
-    using global::Bannerlord.BUTR.Shared.ModuleInfoExtended;
-
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
@@ -91,26 +89,26 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 ReflectionHelper.GetDelegateObjectInstance<GetSubModuleValiditiyDelegate>(_moduleType.GetMethod("GetSubModuleValiditiy"));
         }
 
-        public static IEnumerable<ModuleInfo2> GetLoadedModules()
+        public static IEnumerable<ModuleInfo_> GetLoadedModules()
         {
             if (GetModulesNames == null) yield break;
 
             foreach (string modulesName in GetModulesNames())
             {
-                var moduleInfo = new ModuleInfo2();
+                var moduleInfo = new ModuleInfo_();
                 moduleInfo.Load(modulesName);
                 yield return moduleInfo;
             }
         }
 
-        public static IEnumerable<ModuleInfo2> GetModules()
+        public static IEnumerable<ModuleInfo_> GetModules()
         {
-            var list = new List<ModuleInfo2>();
+            var list = new List<ModuleInfo_>();
             var physicalModules = GetPhysicalModules();
             var platformModules = GetPlatformModules();
             list.AddRange(physicalModules);
             list.AddRange(platformModules);
-            var _allFoundModules = new Dictionary<string, ModuleInfo2>();
+            var _allFoundModules = new Dictionary<string, ModuleInfo_>();
             foreach (var moduleInfo in list)
             {
                 if (!_allFoundModules.ContainsKey(moduleInfo.Id.ToLower()))
@@ -121,11 +119,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
             return list;
         }
 
-        private static IEnumerable<ModuleInfo2> GetPhysicalModules()
+        private static IEnumerable<ModuleInfo_> GetPhysicalModules()
         {
-            foreach (string text in GetModulePaths(ModuleInfo2.PathPrefix, 1).ToArray<string>())
+            foreach (string text in GetModulePaths(ModuleInfo_.PathPrefix, 1).ToArray<string>())
             {
-                var moduleInfo = new ModuleInfo2();
+                var moduleInfo = new ModuleInfo_();
                 try
                 {
                     string directoryName = System.IO.Path.GetDirectoryName(text);
@@ -136,7 +134,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
         }
 
-        private static IEnumerable<ModuleInfo2> GetPlatformModules()
+        private static IEnumerable<ModuleInfo_> GetPlatformModules()
         {
             if (_moduleHelperType == null) yield break;
             if (_platformModuleExtensionField == null) yield break;
@@ -152,7 +150,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
             foreach (string path in modulePaths)
             {
-                var moduleInfo = new ModuleInfo2();
+                var moduleInfo = new ModuleInfo_();
                 try
                 {
                     moduleInfo.LoadWithFullPath(path);
