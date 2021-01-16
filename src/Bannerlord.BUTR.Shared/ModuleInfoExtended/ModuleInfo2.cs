@@ -82,10 +82,10 @@ namespace Bannerlord.ButterLib.Common.Helpers
 
         public static string GetPath(string id) => Path.Combine(PathPrefix, id, "SubModule.xml");
 
-#if BANNERLORDBUTRSHARED_BUTTERLIB
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
         public static IEnumerable<ModuleInfo_> GetExtendedModules()
         {
-            foreach (var path in ModuleInfoHelper.GetModulePaths(System.IO.Path.Combine(BasePath.Name, "Modules"), 1).ToArray())
+            foreach (var path in global::Bannerlord.BUTR.Shared.Helpers.ModuleInfoHelper.GetModulePaths(Path.Combine(BasePath.Name, "Modules"), 1).ToArray())
             {
                 var moduleInfo = new ModuleInfo_();
                 try { moduleInfo.Load(System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(path))); }
