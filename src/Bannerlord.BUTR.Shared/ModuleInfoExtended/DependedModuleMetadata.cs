@@ -52,7 +52,12 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-    internal readonly struct DependedModuleMetadata
+#if !BANNERLORDBUTRSHARED_PUBLIC_MODULEINFO
+    internal 
+#else
+    public
+#endif
+    readonly struct DependedModuleMetadata
     {
         public string Id { get; init; }
         public LoadType LoadType { get; init; }

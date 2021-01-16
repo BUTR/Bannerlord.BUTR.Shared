@@ -58,7 +58,12 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-    internal sealed class ModuleInfo2 : IEquatable<ModuleInfo2>
+#if !BANNERLORDBUTRSHARED_PUBLIC_MODULEINFO
+    internal sealed 
+#else
+    public
+#endif
+    class ModuleInfo2 : IEquatable<ModuleInfo2>
     {
         private static string NativeModuleId = "Native";
         private static string[] OfficialModuleIds = { NativeModuleId, "SandBox", "SandBoxCore", "StoryMode", "CustomBattle" };

@@ -53,7 +53,12 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-    internal sealed class SubModuleInfo2 : IEquatable<SubModuleInfo2>
+#if !BANNERLORDBUTRSHARED_PUBLIC_MODULEINFO
+    internal sealed
+#else
+    public
+#endif
+    class SubModuleInfo2 : IEquatable<SubModuleInfo2>
     {
         private static readonly string? ConfigName = new DirectoryInfo(Directory.GetCurrentDirectory())?.Name;
 

@@ -42,14 +42,24 @@
 
 namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 {
-    internal enum LoadType
+#if !BANNERLORDBUTRSHARED_PUBLIC_MODULEINFO
+    internal
+#else
+    public
+#endif
+    enum LoadType
     {
         NONE           = 0,
         LoadAfterThis  = 1,
         LoadBeforeThis = 2
     }
 
-    internal enum LoadTypeParse
+#if !BANNERLORDBUTRSHARED_PUBLIC_MODULEINFO
+    internal
+#else
+    public
+#endif
+    enum LoadTypeParse
     {
         LoadAfterThis  = 1,
         LoadBeforeThis = 2

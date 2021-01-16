@@ -50,7 +50,12 @@ namespace Bannerlord.BUTR.Shared.ModuleInfoExtended
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-    internal readonly struct DependedModule
+#if !BANNERLORDBUTRSHARED_PUBLIC_MODULEINFO
+    internal
+#else
+    public
+#endif
+    readonly struct DependedModule
     {
         public string ModuleId { get; init; }
         public ApplicationVersion Version { get; init; }
