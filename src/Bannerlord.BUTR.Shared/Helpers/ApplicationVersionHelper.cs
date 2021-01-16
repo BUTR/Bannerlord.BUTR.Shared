@@ -79,11 +79,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
         {
             GetEmpty = ReflectionHelper.GetDelegate<GetEmptyDelegate>(typeof(ApplicationVersion).GetProperty("Empty", BindingFlags.Public | BindingFlags.Static)?.GetMethod);
             
-            SetApplicationVersionType = ReflectionHelper.GetDelegate<SetApplicationVersionTypeDelegate>(typeof(ApplicationVersion).GetProperty("ApplicationVersionType", BindingFlags.Public | BindingFlags.Static)?.SetMethod);
-            SetMajor = ReflectionHelper.GetDelegate<SetMajorDelegate>(typeof(ApplicationVersion).GetProperty("Major", BindingFlags.Public | BindingFlags.Static)?.SetMethod);
-            SetMinor = ReflectionHelper.GetDelegate<SetMinorDelegate>(typeof(ApplicationVersion).GetProperty("Minor", BindingFlags.Public | BindingFlags.Static)?.SetMethod);
-            SetRevision = ReflectionHelper.GetDelegate<SetRevisionDelegate>(typeof(ApplicationVersion).GetProperty("Revision", BindingFlags.Public | BindingFlags.Static)?.SetMethod);
-            SetChangeSet = ReflectionHelper.GetDelegate<SetChangeSetDelegate>(typeof(ApplicationVersion).GetProperty("ChangeSet", BindingFlags.Public | BindingFlags.Static)?.SetMethod);
+            SetApplicationVersionType = ReflectionHelper.GetDelegate<SetApplicationVersionTypeDelegate>(typeof(ApplicationVersion).GetProperty("ApplicationVersionType", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.SetMethod);
+            SetMajor = ReflectionHelper.GetDelegate<SetMajorDelegate>(typeof(ApplicationVersion).GetProperty("Major", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.SetMethod);
+            SetMinor = ReflectionHelper.GetDelegate<SetMinorDelegate>(typeof(ApplicationVersion).GetProperty("Minor", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.SetMethod);
+            SetRevision = ReflectionHelper.GetDelegate<SetRevisionDelegate>(typeof(ApplicationVersion).GetProperty("Revision", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.SetMethod);
+            SetChangeSet = ReflectionHelper.GetDelegate<SetChangeSetDelegate>(typeof(ApplicationVersion).GetProperty("ChangeSet", BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance)?.SetMethod);
         }
 
         private static string GetPrefix(ApplicationVersionType applicationVersionType) => (int) applicationVersionType switch
