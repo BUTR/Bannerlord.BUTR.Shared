@@ -36,14 +36,18 @@
 // SOFTWARE.
 #endregion
 
-using Bannerlord.BUTR.Shared.Extensions;
-
 #if !BANNERLORDBUTRSHARED_DISABLE
 #nullable enable
 #pragma warning disable
 
 namespace Bannerlord.BUTR.Shared.Helpers
 {
+#if !BANNERLORDBUTRSHARED_BUTTERLIB
+    using global::Bannerlord.BUTR.Shared.Extensions;
+#else
+    using global::Bannerlord.ButterLib.Common.Extensions;
+#endif
+
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
     using global::System.Collections.Generic;
