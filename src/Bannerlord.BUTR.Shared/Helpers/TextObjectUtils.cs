@@ -36,6 +36,8 @@
 // SOFTWARE.
 #endregion
 
+using Bannerlord.BUTR.Shared.Extensions;
+
 #if !BANNERLORDBUTRSHARED_DISABLE
 #nullable enable
 #pragma warning disable
@@ -44,6 +46,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 {
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
+    using global::System.Collections.Generic;
     using global::System.Linq;
 
     using global::TaleWorlds.Localization;
@@ -67,6 +70,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private delegate void SetTextVariableTextObjectSingleDelegate(TextObject instance, string tag, float variable);
         private delegate TextObject SetTextVariable2TextObjectSingleDelegate(TextObject instance, string tag, float variable);
 
+        private delegate TextObject SetTextVariableFromObjectDelegate(TextObject instance, string tag, object variable);
+
         private static readonly ConstructorDelegate? TextObjectConstructor;
         private static readonly SetTextVariableTextObjectDelegate? SetTextVariableTextObject;
         private static readonly SetTextVariable2TextObjectDelegate? SetTextVariable2TextObject;
@@ -76,6 +81,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static readonly SetTextVariable2TextObjectInt32Delegate? SetTextVariable2TextObjectInt32;
         private static readonly SetTextVariableTextObjectSingleDelegate? SetTextVariableTextObjectSingle;
         private static readonly SetTextVariable2TextObjectSingleDelegate? SetTextVariable2TextObjectSingle;
+        private static readonly SetTextVariableFromObjectDelegate? SetTextVariableFromObject;
         static TextObjectUtils()
         {
             if (typeof(TextObject).GetConstructors().FirstOrDefault() is { } constructorInfo)
@@ -101,9 +107,33 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 SetTextVariableTextObjectSingle = ReflectionHelper.GetDelegate<SetTextVariableTextObjectSingleDelegate>(setTextVariableFloat);
                 SetTextVariable2TextObjectSingle = ReflectionHelper.GetDelegate<SetTextVariable2TextObjectSingleDelegate>(setTextVariableFloat);
             }
+            if (typeof(TextObject).GetMethod("SetTextVariableFromObject", new[] {typeof(string), typeof(object)}) is { } setTextVariableFromObject)
+            {
+                SetTextVariableFromObject = ReflectionHelper.GetDelegate<SetTextVariableFromObjectDelegate>(setTextVariableFromObject);
+            }
         }
 
         public static TextObject? Create(string value) => TextObjectConstructor is not null ? TextObjectConstructor() : null;
+        public static TextObject? Create(string value, Dictionary<string, TextObject> attributes)
+        {
+            if (Create(value) is { } textObject)
+            {
+                foreach (var (key, value2) in attributes)
+                    textObject.SetTextVariable2(key, value2);
+                return textObject;
+            }
+            return null;
+        }
+        public static TextObject? Create(string value, Dictionary<string, object> attributes)
+        {
+            if (SetTextVariableFromObject is not null && Create(value) is { } textObject)
+            {
+                foreach (var (key, value2) in attributes)
+                    SetTextVariableFromObject(textObject, key, value2);
+                return textObject;
+            }
+            return null;
+        }
 
         public static TextObject SetTextVariable2(this TextObject textObject, string? tag, TextObject? variable)
         {
