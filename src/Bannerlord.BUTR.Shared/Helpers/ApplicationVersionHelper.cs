@@ -109,7 +109,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             _ => (ApplicationVersionType) (int) -1,
         };
 
-        private static ApplicationVersion FromParametersFile(string versionGameType)
+        public static ApplicationVersion FromParametersFile(string versionGameType)
         {
             var xmlDocument = new XmlDocument();
             xmlDocument.LoadXml(VirtualFolders.GetFileContent(Path.Combine(BasePath.Name, "Parameters", "Version.xml")));
