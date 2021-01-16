@@ -64,7 +64,20 @@ namespace Bannerlord.BUTR.Shared.Helpers
         }
 
         public static TDelegate? GetDelegate<TDelegate>(MethodInfo? methodInfo) where TDelegate : Delegate
-            => methodInfo is null ? null : Delegate.CreateDelegate(typeof(TDelegate), methodInfo) as TDelegate;
+        {
+            //var returnType = typeof(TDelegate).GetMethod("Invoke").ReturnType;
+            //if (methodInfo.ReturnType != returnType)
+            //    return null;
+
+            try
+            {
+                return methodInfo is null ? null : Delegate.CreateDelegate(typeof(TDelegate), methodInfo) as TDelegate;
+            }
+            catch (ArgumentException)
+            {
+                return null;
+            }
+        }
 
         public static TDelegate? GetDelegateObjectInstance<TDelegate>(MethodInfo? methodInfo) where TDelegate : Delegate
         {
