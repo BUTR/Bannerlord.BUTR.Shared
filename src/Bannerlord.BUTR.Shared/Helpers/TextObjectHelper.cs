@@ -52,6 +52,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.Diagnostics.CodeAnalysis;
     using global::System.Collections.Generic;
     using global::System.Linq;
+    using global::System.Reflection;
 
     using global::TaleWorlds.Localization;
 
@@ -77,6 +78,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private delegate TextObject SetTextVariableFromObjectDelegate(TextObject instance, string tag, object variable);
 
         private static readonly ConstructorDelegate? TextObjectConstructor;
+        private static readonly FieldInfo ValueField;
         private static readonly SetTextVariableTextObjectDelegate? SetTextVariableTextObject;
         private static readonly SetTextVariable2TextObjectDelegate? SetTextVariable2TextObject;
         private static readonly SetTextVariableTextObjectStringDelegate? SetTextVariableTextObjectString;
@@ -91,6 +93,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
         {
             if (typeof(TextObject).GetConstructors().FirstOrDefault() is { } constructorInfo)
                 TextObjectConstructor = ReflectionHelper.GetDelegate<ConstructorDelegate>(constructorInfo);
+
+            if (typeof(TextObject).GetField("Value", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance) is { } value)
+            {
+                ValueField = value;
+            }
 
             if (typeof(TextObject).GetMethod("SetTextVariable", new[] {typeof(string), typeof(TextObject)}) is { } setTextVariableTO)
             {
@@ -118,7 +125,15 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
         }
 
-        public static TextObject? Create(string value) => TextObjectConstructor is not null ? TextObjectConstructor() : null;
+        public static TextObject? Create(string value)
+        {
+            if (TextObjectConstructor is not null && TextObjectConstructor() is { } textObject)
+                ValueField?.SetValue(textObject, value);
+            return null;
+        }
+        public static TextObject? Create(int value)=> Create(value.ToString());
+        public static TextObject? Create(float value) => Create(value.ToString("R"));
+
         public static TextObject? Create(string value, Dictionary<string, TextObject> attributes)
         {
             if (Create(value) is { } textObject)
