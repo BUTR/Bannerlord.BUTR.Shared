@@ -85,7 +85,7 @@ namespace Bannerlord.ButterLib.Common.Helpers
 #if BANNERLORDBUTRSHARED_BUTTERLIB
         public static IEnumerable<ModuleInfo_> GetExtendedModules()
         {
-            foreach (var path in ModuleUtils.GetModulePaths(System.IO.Path.Combine(BasePath.Name, "Modules"), 1).ToArray())
+            foreach (var path in ModuleInfoHelper.GetModulePaths(System.IO.Path.Combine(BasePath.Name, "Modules"), 1).ToArray())
             {
                 var moduleInfo = new ModuleInfo_();
                 try { moduleInfo.Load(System.IO.Path.GetFileName(System.IO.Path.GetDirectoryName(path))); }
