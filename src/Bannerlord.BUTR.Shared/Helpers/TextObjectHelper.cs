@@ -53,6 +53,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.Collections.Generic;
     using global::System.Linq;
     using global::System.Reflection;
+    using global::System.Runtime.Serialization;
 
     using global::TaleWorlds.Localization;
 
@@ -61,8 +62,6 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #endif
     internal static class TextObjectHelper
     {
-        private delegate TextObject ConstructorDelegate();
-
         private delegate void SetTextVariableTextObjectDelegate(TextObject instance, string tag, TextObject variable);
         private delegate TextObject SetTextVariable2TextObjectDelegate(TextObject instance, string tag, TextObject variable);
 
@@ -77,7 +76,6 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         private delegate TextObject SetTextVariableFromObjectDelegate(TextObject instance, string tag, object variable);
 
-        private static readonly ConstructorDelegate? TextObjectConstructor;
         private static readonly FieldInfo ValueField;
         private static readonly SetTextVariableTextObjectDelegate? SetTextVariableTextObject;
         private static readonly SetTextVariable2TextObjectDelegate? SetTextVariable2TextObject;
@@ -91,9 +89,6 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         static TextObjectHelper()
         {
-            if (typeof(TextObject).GetConstructors().FirstOrDefault() is { } constructorInfo)
-                TextObjectConstructor = ReflectionHelper.GetDelegate<ConstructorDelegate>(constructorInfo);
-
             if (typeof(TextObject).GetField("Value", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance) is { } value)
             {
                 ValueField = value;
@@ -127,8 +122,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static TextObject? Create(string value)
         {
-            if (TextObjectConstructor is not null && TextObjectConstructor() is { } textObject)
-                ValueField?.SetValue(textObject, value);
+            var textObject = FormatterServices.GetUninitializedObject(typeof(TextObject));
+            ValueField?.SetValue(textObject, value);
             return null;
         }
         public static TextObject? Create(int value)=> Create(value.ToString());
