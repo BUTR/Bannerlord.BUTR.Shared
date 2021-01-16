@@ -65,8 +65,6 @@ namespace Bannerlord.ButterLib.Common.Helpers
     using global::System.Linq;
     using global::System.Xml;
 
-    using global::Bannerlord.BUTR.Shared.Helpers;
-
     using global::TaleWorlds.MountAndBlade;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
@@ -86,7 +84,7 @@ namespace Bannerlord.ButterLib.Common.Helpers
             {
                 foreach (var (key, value) in subModuleInfo.Tags)
                 {
-                    if (!ModuleInfoHelper.GetSubModuleTagValiditiy(key, value))
+                    if (!global::Bannerlord.BUTR.Shared.Helpers.ModuleInfoHelper.GetSubModuleTagValiditiy(key, value))
                     {
                         return false;
                     }
