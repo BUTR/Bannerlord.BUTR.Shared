@@ -142,7 +142,7 @@ namespace Bannerlord.ButterLib.Common.Helpers
                 }
 			}
 
-            SubModuleInstance = Module.CurrentModule.SubModules.FirstOrDefault(s => s.GetType().FullName.Equals(SubModuleClassType, StringComparison.OrdinalIgnoreCase));
+            SubModuleInstance = Module.CurrentModule?.SubModules?.FirstOrDefault(s => s.GetType().FullName.Equals(SubModuleClassType, StringComparison.OrdinalIgnoreCase));
             IsLoadable = CheckIfSubmoduleCanBeLoadable(this);
 		}
 
