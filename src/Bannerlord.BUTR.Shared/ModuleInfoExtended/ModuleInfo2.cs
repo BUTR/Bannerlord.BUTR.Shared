@@ -209,20 +209,23 @@ namespace Bannerlord.ButterLib.Common.Helpers
                             LoadType = LoadType.NONE,
                             IsOptional = false,
                             IsIncompatible = incompatible,
-                            Version = ApplicationVersionHelper.Empty
+                            Version = ApplicationVersionHelper.Empty,
+                            VersionRange = ApplicationVersionRange.Empty
                         });
                     }
                     else if (dependedModuleMetadatasList[i]?.Attributes["order"] is { } orderAttr && Enum.TryParse<LoadTypeParse>(orderAttr.InnerText, out var order))
                     {
                         var optional = dependedModuleMetadatasList[i]?.Attributes["optional"]?.InnerText.Equals("true") ?? false;
                         var version = ApplicationVersionHelper.TryParse(dependedModuleMetadatasList[i]?.Attributes["version"]?.InnerText, out var v) ? v : ApplicationVersionHelper.Empty;
+                        var versionRange = ApplicationVersionRange.TryParse(dependedModuleMetadatasList[i]?.Attributes["version"]?.InnerText, out var vr) ? vr : ApplicationVersionRange.Empty;
                         DependedModuleMetadatas.Add(new DependedModuleMetadata
                         {
                             Id = idAttr.InnerText,
                             LoadType = (LoadType) order,
                             IsOptional = optional,
                             IsIncompatible = incompatible,
-                            Version = version
+                            Version = version,
+                            VersionRange = versionRange
                         });
                     }
                 }
@@ -241,7 +244,8 @@ namespace Bannerlord.ButterLib.Common.Helpers
                         LoadType = LoadType.NONE,
                         IsOptional = true,
                         IsIncompatible = false,
-                        Version = ApplicationVersionHelper.Empty
+                        Version = ApplicationVersionHelper.Empty,
+                        VersionRange = ApplicationVersionRange.Empty
                     });
                 }
             }
@@ -262,7 +266,8 @@ namespace Bannerlord.ButterLib.Common.Helpers
                         LoadType = LoadType.NONE,
                         IsOptional = true,
                         IsIncompatible = false,
-                        Version = ApplicationVersionHelper.Empty
+                        Version = ApplicationVersionHelper.Empty,
+                        VersionRange = ApplicationVersionRange.Empty
                     });
                 }
             }
@@ -286,7 +291,8 @@ namespace Bannerlord.ButterLib.Common.Helpers
                         LoadType = LoadType.LoadBeforeThis,
                         IsOptional = requiredGameVersionOptional && !isNative,
                         IsIncompatible = false,
-                        Version = gameVersion
+                        Version = gameVersion,
+                        VersionRange = ApplicationVersionRange.Empty
                     });
                 }
             }

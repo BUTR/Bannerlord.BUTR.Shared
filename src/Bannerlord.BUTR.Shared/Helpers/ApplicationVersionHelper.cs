@@ -140,14 +140,16 @@ namespace Bannerlord.BUTR.Shared.Helpers
             return version;
         }
 
-        public static bool TryParse(string? versionAsString, out ApplicationVersion version)
+        public static bool TryParse(string? versionAsString, out ApplicationVersion version) => TryParse(versionAsString, out version, true);
+
+        public static bool TryParse(string? versionAsString, out ApplicationVersion version, bool asMin)
         {
-            var major = 0;
-            var minor = 0;
-            var revision = 0;
-            var changeSet = 0;
+            var major = asMin ? 0 : int.MaxValue;
+            var minor = asMin ? 0 : int.MaxValue;
+            var revision = asMin ? 0 : int.MaxValue;
+            var changeSet = asMin ? 0 : int.MaxValue;
             bool skipCheck = false;
-            version = default;
+            version = Empty;
             if (versionAsString is null)
                 return false;
 
@@ -168,23 +170,23 @@ namespace Bannerlord.BUTR.Shared.Helpers
             if (!skipCheck && !int.TryParse(array[1], out minor))
             {
                 if (array[1] != "*") return false;
-                minor = 0;
-                revision = 0;
-                changeSet = 0;
+                minor = asMin ? 0 : int.MaxValue;
+                revision = asMin ? 0 : int.MaxValue;
+                changeSet = asMin ? 0 : int.MaxValue;
                 skipCheck = true;
             }
             if (!skipCheck && !int.TryParse(array[2], out revision))
             {
                 if (array[2] != "*") return false;
-                revision = 0;
-                changeSet = 0;
+                revision = asMin ? 0 : int.MaxValue;
+                changeSet = asMin ? 0 : int.MaxValue;
                 skipCheck = true;
             }
 
             if (!skipCheck && array.Length == 4 && !int.TryParse(array[3], out changeSet))
             {
                 if (array[3] != "*") return false;
-                changeSet = 0;
+                changeSet = asMin ? 0 : int.MaxValue;
                 skipCheck = true;
             }
 
