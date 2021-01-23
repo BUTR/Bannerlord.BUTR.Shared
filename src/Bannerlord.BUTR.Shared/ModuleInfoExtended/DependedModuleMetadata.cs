@@ -104,7 +104,13 @@ namespace Bannerlord.ButterLib.Common.Helpers
 
         public bool Equals(ApplicationVersionRange other) => Min.IsSame(other.Min) && Max.IsSame(other.Max);
         public override bool Equals(object? obj) => obj is ApplicationVersionRange other && Equals(other);
-        public override int GetHashCode() => HashCode.Combine(Min, Max);
+        public override int GetHashCode()
+        {
+            int hash = 13;
+            hash = (hash * 7) + Min.GetHashCode();
+            hash = (hash * 7) + Max.GetHashCode();
+            return hash;
+        }
         public static bool operator ==(ApplicationVersionRange left, ApplicationVersionRange right) => left.Equals(right);
         public static bool operator !=(ApplicationVersionRange left, ApplicationVersionRange right) => !left.Equals(right);
     }
@@ -161,7 +167,7 @@ namespace Bannerlord.ButterLib.Common.Helpers
             LoadType.LoadBeforeThis => "After        ",
             _                       => "ERROR        "
         };
-        private static string GetVersion(ApplicationVersion av) => av == ApplicationVersionHelper.Empty ? "" : $" {av}";
+        private static string GetVersion(ApplicationVersion av) => ApplicationVersionHelper.IsSameWithChangeSet(av, ApplicationVersionHelper.Empty) ? "" : $" {av}";
         private static string GetVersionRange(ApplicationVersionRange avr) => avr == ApplicationVersionRange.Empty ? "" : $" {avr}";
         private static string GetOptional(bool isOptional) => isOptional ? " Optional" : "";
         private static string GetIncompatible(bool isOptional) => isOptional ? "Incompatible " : "";

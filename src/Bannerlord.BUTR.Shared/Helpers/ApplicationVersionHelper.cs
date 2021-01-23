@@ -216,6 +216,22 @@ namespace Bannerlord.BUTR.Shared.Helpers
             var def = FromParametersFile("Singleplayer");
             return $"{prefix}{av.Major}.{av.Minor}.{av.Revision}{(av.ChangeSet == def.ChangeSet ? "" : $".{av.ChangeSet}")}";
         }
+
+        public static bool IsSame(this ApplicationVersion @this, ApplicationVersion other)
+        {
+            return @this.ApplicationVersionType == other.ApplicationVersionType &&
+                   @this.Major == other.Major &&
+                   @this.Minor == other.Minor &&
+                   @this.Revision == other.Revision;
+        }
+        public static bool IsSameWithChangeSet(this ApplicationVersion @this, ApplicationVersion other)
+        {
+            return @this.ApplicationVersionType == other.ApplicationVersionType &&
+                   @this.Major == other.Major &&
+                   @this.Minor == other.Minor &&
+                   @this.Revision == other.Revision &&
+                   @this.ChangeSet == other.ChangeSet;
+        }
     }
 }
 
