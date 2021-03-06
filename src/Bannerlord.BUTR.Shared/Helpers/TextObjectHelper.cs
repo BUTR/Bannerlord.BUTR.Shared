@@ -36,6 +36,8 @@
 // SOFTWARE.
 #endregion
 
+using System;
+
 #if !BANNERLORDBUTRSHARED_DISABLE
 #nullable enable
 #pragma warning disable
@@ -51,7 +53,6 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
     using global::System.Collections.Generic;
-    using global::System.Linq;
     using global::System.Reflection;
     using global::System.Runtime.Serialization;
 
@@ -120,19 +121,21 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
         }
 
-        public static TextObject? Create(string value)
+        public static TextObject? Create(string? value)
         {
             if (FormatterServices.GetUninitializedObject(typeof(TextObject)) is TextObject textObject)
             {
-                ValueField?.SetValue(textObject, value);
+                ValueField?.SetValue(textObject, value ?? string.Empty);
                 return textObject;
             }
             return null;
         }
-        public static TextObject? Create(int value)=> Create(value.ToString());
+        public static TextObject? Create(int value) => Create(value.ToString());
         public static TextObject? Create(float value) => Create(value.ToString("R"));
+        public static TextObject? Create(int? value) => Create(value?.ToString());
+        public static TextObject? Create(float? value) => Create(value?.ToString("R"));
 
-        public static TextObject? Create(string value, Dictionary<string, TextObject> attributes)
+        public static TextObject? Create(string? value, Dictionary<string, TextObject?> attributes)
         {
             if (Create(value) is { } textObject)
             {
@@ -142,7 +145,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
             return null;
         }
-        public static TextObject? Create(string value, Dictionary<string, object> attributes)
+        public static TextObject? Create(string? value, Dictionary<string, object?> attributes)
         {
             if (SetTextVariableFromObject is not null && Create(value) is { } textObject)
             {
