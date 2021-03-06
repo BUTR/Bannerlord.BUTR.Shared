@@ -65,13 +65,16 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static TDelegate? GetDelegate<TDelegate>(MethodInfo? methodInfo) where TDelegate : Delegate
         {
+            if (methodInfo is null) return null;
+
+            if (!typeof(Delegate).IsAssignableFrom(typeof(TDelegate))) return null;
+
             //var returnType = typeof(TDelegate).GetMethod("Invoke").ReturnType;
-            //if (methodInfo.ReturnType != returnType)
-            //    return null;
+            //if (methodInfo.ReturnType != returnType) return null;
 
             try
             {
-                return methodInfo is null ? null : Delegate.CreateDelegate(typeof(TDelegate), methodInfo) as TDelegate;
+                return Delegate.CreateDelegate(typeof(TDelegate), methodInfo) as TDelegate;
             }
             catch (ArgumentException)
             {
@@ -86,13 +89,22 @@ namespace Bannerlord.BUTR.Shared.Helpers
             var instance = Expression.Parameter(typeof(object), "instance");
             var parameters = methodInfo.GetParameters().Select((t2, i) => Expression.Parameter(t2.ParameterType, $"p{i}")).ToList();
 
-            var body = Expression.Call(
-                Expression.Convert(instance, methodInfo.DeclaringType),
-                methodInfo,
-                parameters);
+            var body = Expression.Call(Expression.Convert(instance, methodInfo.DeclaringType), methodInfo, parameters);
 
             return Expression.Lambda<TDelegate>(body, new List<ParameterExpression> { instance }.Concat(parameters)).Compile();
         }
+
+        /// <summary>
+        /// Get a delegate for an instance method described by <paramref name="methodInfo"/> and bound to <paramref name="instance"/>.
+        /// </summary>
+        /// <param name="instance">The instance for which the method is defined.</param>
+        /// <param name="methodInfo">The method's <see cref="MethodInfo"/>.</param>
+        /// <returns>
+        /// A delegate or <see langword="null"/> when <paramref name="instance"/> or <paramref name="methodInfo"/>
+        /// is <see langword="null"/> or when the method cannot be found.
+        /// </returns>
+        public static TDelegate? GetDelegate<TDelegate>(object? instance, MethodInfo? methodInfo) where TDelegate : Delegate
+            => instance is null || methodInfo is null ? null : Delegate.CreateDelegate(typeof(TDelegate), instance, methodInfo.Name) as TDelegate;
     }
 }
 
