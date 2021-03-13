@@ -58,40 +58,67 @@ namespace Bannerlord.BUTR.Shared.Helpers
         public static TDelegate? GetDelegate<TDelegate>(ConstructorInfo? constructorInfo) where TDelegate : Delegate
         {
             if (constructorInfo is null) return null;
-            var parameters = constructorInfo.GetParameters().Select((p, i) => Expression.Parameter(p.ParameterType, $"p{i}")).ToList();
-            var newExpression = Expression.New(constructorInfo, parameters);
-            return Expression.Lambda<TDelegate>(newExpression, parameters).Compile();
-        }
+            
+            if (typeof(TDelegate).GetMethod("Invoke") is not { } delegateInvoke) return null;
 
-        public static TDelegate? GetDelegate<TDelegate>(MethodInfo? methodInfo) where TDelegate : Delegate
-        {
-            if (methodInfo is null) return null;
+            var delegateParameters = delegateInvoke.GetParameters();
+            var constructorParameters = constructorInfo.GetParameters();
 
-            if (!typeof(Delegate).IsAssignableFrom(typeof(TDelegate))) return null;
-
-            //var returnType = typeof(TDelegate).GetMethod("Invoke").ReturnType;
-            //if (methodInfo.ReturnType != returnType) return null;
+            if (delegateParameters.Length != constructorParameters.Length) return null;
 
             try
             {
-                return Delegate.CreateDelegate(typeof(TDelegate), methodInfo) as TDelegate;
+                var instance = Expression.Parameter(typeof(object), "instance");
+                var returnParameters = delegateParameters
+                    .Select((pi, i) => Expression.Parameter(pi.ParameterType, $"p{i}"))
+                    .ToList();
+                var inputParameters = returnParameters
+                    .Select((pe, i) => Expression.Convert(pe, constructorParameters[i].ParameterType))
+                    .ToList();
+
+                Expression body = Expression.New(constructorInfo, inputParameters);
+                if (delegateInvoke.ReturnType != constructorInfo.DeclaringType) body = Expression.Convert(body, constructorInfo.DeclaringType);
+
+                return Expression.Lambda<TDelegate>(body, returnParameters).Compile();
             }
-            catch (ArgumentException)
+            catch (Exception)
             {
                 return null;
             }
         }
 
-        public static TDelegate? GetDelegateObjectInstance<TDelegate>(MethodInfo? methodInfo) where TDelegate : Delegate
+        /// <summary>Get a delegate for a method described by <paramref name="methodInfo"/>.</summary>
+        /// <param name="methodInfo">The method's <see cref="MethodInfo"/>.</param>
+        /// <returns>A delegate or <see langword="null"/> when <paramref name="methodInfo"/> is <see langword="null"/>.</returns>
+        public static TDelegate? GetDelegate<TDelegate>(MethodInfo? methodInfo) where TDelegate : Delegate
         {
-            if (methodInfo?.DeclaringType is null) return null;
+            if (methodInfo is null) return null;
+            
+            if (typeof(TDelegate).GetMethod("Invoke") is not { } delegateInvoke) return null;
 
-            var instance = Expression.Parameter(typeof(object), "instance");
-            var parameters = methodInfo.GetParameters().Select((t2, i) => Expression.Parameter(t2.ParameterType, $"p{i}")).ToList();
+            var delegateParameters = delegateInvoke.GetParameters();
+            var methodParameters = methodInfo.GetParameters();
 
-            var body = Expression.Call(Expression.Convert(instance, methodInfo.DeclaringType), methodInfo, parameters);
+            if (delegateParameters.Length != methodParameters.Length) return null;
 
-            return Expression.Lambda<TDelegate>(body, new List<ParameterExpression> { instance }.Concat(parameters)).Compile();
+            try
+            {
+                var returnParameters = delegateParameters
+                    .Select((pi, i) => Expression.Parameter(pi.ParameterType, $"p{i}"))
+                    .ToList();
+                var inputParameters = returnParameters
+                    .Select((pe, i) => Expression.Convert(pe, methodParameters[i].ParameterType))
+                    .ToList();
+
+                Expression body = Expression.Call(methodInfo, inputParameters);
+                if (delegateInvoke.ReturnType != methodInfo.ReturnType) body = Expression.Convert(body, methodInfo.ReturnType);
+
+                return Expression.Lambda<TDelegate>(body, returnParameters).Compile();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
         }
 
         /// <summary>
@@ -104,7 +131,69 @@ namespace Bannerlord.BUTR.Shared.Helpers
         /// is <see langword="null"/> or when the method cannot be found.
         /// </returns>
         public static TDelegate? GetDelegate<TDelegate>(object? instance, MethodInfo? methodInfo) where TDelegate : Delegate
-            => instance is null || methodInfo is null ? null : Delegate.CreateDelegate(typeof(TDelegate), instance, methodInfo.Name) as TDelegate;
+        {
+            if (methodInfo is null) return null;
+
+            if (typeof(TDelegate).GetMethod("Invoke") is not { } delegateInvoke) return null;
+
+            var delegateParameters = delegateInvoke.GetParameters();
+            var methodParameters = methodInfo.GetParameters();
+
+            if (delegateParameters.Length != methodParameters.Length) return null;
+
+            try
+            {
+                var returnParameters = delegateParameters
+                    .Select((pi, i) => Expression.Parameter(pi.ParameterType, $"p{i}"))
+                    .ToList();
+                var inputParameters = returnParameters
+                    .Select((pe, i) => Expression.Convert(pe, methodParameters[i].ParameterType))
+                    .ToList();
+
+                Expression body = Expression.Call(Expression.Constant(instance), methodInfo, inputParameters);
+                if (delegateInvoke.ReturnType != methodInfo.ReturnType) body = Expression.Convert(body, methodInfo.ReturnType);
+
+                return Expression.Lambda<TDelegate>(body, returnParameters).Compile();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
+
+        public static TDelegate? GetDelegateObjectInstance<TDelegate>(MethodInfo? methodInfo) where TDelegate : Delegate
+        {
+            if (methodInfo is null) return null;
+            
+            if (typeof(TDelegate).GetMethod("Invoke") is not { } delegateInvoke) return null;
+
+            var delegateParameters = delegateInvoke.GetParameters();
+            if (delegateParameters.Length == 0) return null;
+            var methodParameters = methodInfo.GetParameters();
+
+            if (delegateParameters.Length != (methodParameters.Length + 1)) return null;
+
+            try
+            {
+                var instance = Expression.Parameter(typeof(object), "instance");
+                var returnParameters = delegateParameters
+                    .Skip(1)
+                    .Select((pi, i) => Expression.Parameter(pi.ParameterType, $"p{i}"))
+                    .ToList();
+                var inputParameters = returnParameters
+                    .Select((pe, i) => Expression.Convert(pe, methodParameters[i].ParameterType))
+                    .ToList();
+
+                Expression body = Expression.Call(Expression.Convert(instance, methodInfo.DeclaringType), methodInfo, inputParameters);
+                if (delegateInvoke.ReturnType != methodInfo.ReturnType) body = Expression.Convert(body, methodInfo.ReturnType);
+
+                return Expression.Lambda<TDelegate>(body, new List<ParameterExpression> { instance }.Concat(returnParameters)).Compile();
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
     }
 }
 
