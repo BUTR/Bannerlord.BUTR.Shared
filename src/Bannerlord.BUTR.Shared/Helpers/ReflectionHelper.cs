@@ -87,7 +87,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             
             if (typeof(TDelegate).GetMethod("Invoke") is not { } delegateInvoke) return null;
 
-            if (delegateInvoke.ReturnType.IsAssignableFrom(constructorInfo.DeclaringType)) return null;
+            if (!delegateInvoke.ReturnType.IsAssignableFrom(constructorInfo.DeclaringType)) return null;
 
             var delegateParameters = delegateInvoke.GetParameters();
             var constructorParameters = constructorInfo.GetParameters();
@@ -132,7 +132,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
             if (typeof(TDelegate).GetMethod("Invoke") is not { } delegateInvoke) return null;
 
-            if (delegateInvoke.ReturnType.IsAssignableFrom(methodInfo.ReturnType)) return null;
+            if (!delegateInvoke.ReturnType.IsAssignableFrom(methodInfo.ReturnType)) return null;
 
             var delegateParameters = delegateInvoke.GetParameters();
             var methodParameters = methodInfo.GetParameters();
