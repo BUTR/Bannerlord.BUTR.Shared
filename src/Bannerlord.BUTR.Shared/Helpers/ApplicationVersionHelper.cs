@@ -49,6 +49,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.Runtime.Serialization;
     using global::System.IO;
 
+    using global::TaleWorlds.DotNet;
     using global::TaleWorlds.Library;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
@@ -56,6 +57,12 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #endif
     internal static class ApplicationVersionHelper
     {
+        private delegate string? GetVersionStrDelegateV1();
+        private delegate string? GetVersionStrDelegateV2(string str);
+        
+        private static readonly GetVersionStrDelegateV1? GetVersionStrV1;
+        private static readonly GetVersionStrDelegateV2? GetVersionStrV2;
+
         /*
         private delegate void SetApplicationVersionTypeDelegate(object instance, ApplicationVersionType applicationVersionType);
         private static readonly SetApplicationVersionTypeDelegate? SetApplicationVersionType;
@@ -106,6 +113,14 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
             GetEmpty = ReflectionHelper.GetDelegate<GetEmptyDelegate>(typeof(ApplicationVersion).GetProperty("Empty", BindingFlags.Public | BindingFlags.Static)?.GetMethod);
 
+            if (typeof(Managed).GetMethod("GetVersionStr", all) is { } getVersionStrMethod)
+            {
+                var @params = getVersionStrMethod?.GetParameters();
+                if (@params.Length == 0)
+                    GetVersionStrV1 = ReflectionHelper.GetDelegate<GetVersionStrDelegateV1>(getVersionStrMethod);
+                if (@params.Length == 1 && @params[0].ParameterType == typeof(string))
+                    GetVersionStrV2 = ReflectionHelper.GetDelegate<GetVersionStrDelegateV2>(getVersionStrMethod);
+            }
         }
 
         private static string GetPrefix(ApplicationVersionType applicationVersionType) => (int) applicationVersionType switch
@@ -148,7 +163,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             var minor = asMin ? 0 : int.MaxValue;
             var revision = asMin ? 0 : int.MaxValue;
             var changeSet = asMin ? 0 : int.MaxValue;
-            bool skipCheck = false;
+            var skipCheck = false;
             version = Empty;
             if (versionAsString is null)
                 return false;
@@ -212,25 +227,35 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static string ToString(ApplicationVersion av)
         {
-            string prefix = GetPrefix(av.ApplicationVersionType);
+            var prefix = GetPrefix(av.ApplicationVersionType);
             var def = FromParametersFile("Singleplayer");
             return $"{prefix}{av.Major}.{av.Minor}.{av.Revision}{(av.ChangeSet == def.ChangeSet ? "" : $".{av.ChangeSet}")}";
         }
 
-        public static bool IsSame(this ApplicationVersion @this, ApplicationVersion other)
+        public static bool IsSame(this ApplicationVersion @this, ApplicationVersion other) =>
+            @this.ApplicationVersionType == other.ApplicationVersionType &&
+            @this.Major == other.Major &&
+            @this.Minor == other.Minor &&
+            @this.Revision == other.Revision;
+
+        public static bool IsSameWithChangeSet(this ApplicationVersion @this, ApplicationVersion other) =>
+            @this.ApplicationVersionType == other.ApplicationVersionType &&
+            @this.Major == other.Major &&
+            @this.Minor == other.Minor &&
+            @this.Revision == other.Revision &&
+            @this.ChangeSet == other.ChangeSet;
+
+        public static ApplicationVersion? GameVersion() => TryParse(GameVersionStr(), out var v) ? v : null;
+
+        public static string GameVersionStr()
         {
-            return @this.ApplicationVersionType == other.ApplicationVersionType &&
-                   @this.Major == other.Major &&
-                   @this.Minor == other.Minor &&
-                   @this.Revision == other.Revision;
-        }
-        public static bool IsSameWithChangeSet(this ApplicationVersion @this, ApplicationVersion other)
-        {
-            return @this.ApplicationVersionType == other.ApplicationVersionType &&
-                   @this.Major == other.Major &&
-                   @this.Minor == other.Minor &&
-                   @this.Revision == other.Revision &&
-                   @this.ChangeSet == other.ChangeSet;
+            if (GetVersionStrV1 is not null)
+                return GetVersionStrV1() ?? "e1.0.0";
+
+            if (GetVersionStrV2 is not null)
+                return GetVersionStrV2("Singleplayer") ?? "e1.0.0";
+
+            return ToString(FromParametersFile("Singleplayer"));
         }
     }
 }
