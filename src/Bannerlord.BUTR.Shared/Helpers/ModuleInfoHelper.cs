@@ -119,6 +119,26 @@ namespace Bannerlord.BUTR.Shared.Helpers
             return list;
         }
 
+        public static ModuleInfo_? GetModuleByType(Type type)
+        {
+            if (!typeof(TaleWorlds.MountAndBlade.MBSubModuleBase).IsAssignableFrom(type) || string.IsNullOrWhiteSpace(type.Assembly.Location))
+                return null;
+
+            var fullAssemblyPath= Path.GetFullPath(type.Assembly.Location);
+            foreach (var loadedModule in GetLoadedModules())
+            {
+                var loadedModuleDirectory = Path.GetFullPath(Path.Combine(TaleWorlds.Engine.Utilities.GetBasePath(), "Modules", loadedModule.Id));
+                var relativePath = new Uri(GetFullPathWithEndingSlashes(loadedModuleDirectory)).MakeRelativeUri(new Uri(fullAssemblyPath));
+                if (!relativePath.OriginalString.StartsWith("../"))
+                    return loadedModule;
+            }
+
+            return null;
+        }
+
+        private static string GetFullPathWithEndingSlashes(string input) =>
+            $"{Path.GetFullPath(input).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)}{Path.DirectorySeparatorChar}";
+
         private static IEnumerable<ModuleInfo_> GetPhysicalModules()
         {
             foreach (string text in GetModulePaths(ModuleInfo_.PathPrefix, 1).ToArray<string>())
