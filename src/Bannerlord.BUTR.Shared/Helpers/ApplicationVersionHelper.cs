@@ -7,7 +7,7 @@
 //   Consider migrating to PackageReferences instead:
 //   https://docs.microsoft.com/en-us/nuget/consume-packages/migrate-packages-config-to-package-reference
 //   Migrating brings the following benefits:
-//   * The "Bannerlord.BUTR.Shared" folder and the "Bannerlord.BUTR.Shared.cs" file don't appear in your project.
+//   * The "Bannerlord.BUTR.Shared/Helpers" folder and the "ApplicationVersionHelper.cs" file don't appear in your project.
 //   * The added file is immutable and can therefore not be modified by coincidence.
 //   * Updating/Uninstalling the package will work flawlessly.
 // </auto-generated>
@@ -42,6 +42,7 @@
 
 namespace Bannerlord.BUTR.Shared.Helpers
 {
+    using global::System.Collections.Generic;
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
     using global::System.Xml;
@@ -256,6 +257,29 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 return GetVersionStrV2("Singleplayer") ?? "e1.0.0";
 
             return ToString(FromParametersFile("Singleplayer"));
+        }
+    }
+
+    internal class ApplicationVersionWithoutGameTypeComparer : IComparer<ApplicationVersion>
+    {
+        public int Compare(ApplicationVersion x, ApplicationVersion y)
+        {
+            var applicationVersionTypeComparison = x.ApplicationVersionType.CompareTo(y.ApplicationVersionType);
+            if (applicationVersionTypeComparison != 0) return applicationVersionTypeComparison;
+
+            var majorComparison = x.Major.CompareTo(y.Major);
+            if (majorComparison != 0) return majorComparison;
+
+            var minorComparison = x.Minor.CompareTo(y.Minor);
+            if (minorComparison != 0) return minorComparison;
+
+            var revisionComparison = x.Revision.CompareTo(y.Revision);
+            if (revisionComparison != 0) return revisionComparison;
+
+            var changeSetComparison = x.ChangeSet.CompareTo(y.ChangeSet);
+            if (changeSetComparison != 0) return changeSetComparison;
+
+            return 0;
         }
     }
 }

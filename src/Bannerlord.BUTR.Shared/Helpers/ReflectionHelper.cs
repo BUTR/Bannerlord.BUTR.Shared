@@ -7,7 +7,7 @@
 //   Consider migrating to PackageReferences instead:
 //   https://docs.microsoft.com/en-us/nuget/consume-packages/migrate-packages-config-to-package-reference
 //   Migrating brings the following benefits:
-//   * The "Bannerlord.BUTR.Shared" folder and the "Bannerlord.BUTR.Shared.cs" file don't appear in your project.
+//   * The "Bannerlord.BUTR.Shared/Helpers" folder and the "ReflectionHelper.cs" file don't appear in your project.
 //   * The added file is immutable and can therefore not be modified by coincidence.
 //   * Updating/Uninstalling the package will work flawlessly.
 // </auto-generated>
@@ -100,11 +100,19 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 .Select((pi, i) => Expression.Parameter(pi.ParameterType, $"p{i}"))
                 .ToList();
             var inputParameters = returnParameters
-                .Select((pe, i) => Expression.Convert(pe, constructorParameters[i].ParameterType))
+                .Select((pe, i) =>
+                {
+                    if (pe.IsByRef || pe.Type.Equals(constructorParameters[i].ParameterType)) // TODO: Convert?
+                        return (Expression) pe;
+                    else
+                        return (Expression) Expression.Convert(pe, constructorParameters[i].ParameterType);
+                })
                 .ToList();
 
             Expression @new = Expression.New(constructorInfo, inputParameters);
-            var body = Expression.Convert(@new, constructorInfo.DeclaringType);
+            var body = @new.Type.Equals(delegateInvoke.ReturnType) 
+                ? @new 
+                : Expression.Convert(@new, delegateInvoke.ReturnType);
 
             try
             {
@@ -133,17 +141,23 @@ namespace Bannerlord.BUTR.Shared.Helpers
             if (typeof(TDelegate).GetMethod("Invoke") is not { } delegateInvoke) return null;
 
             if (!delegateInvoke.ReturnType.IsAssignableFrom(methodInfo.ReturnType)) return null;
-
+            
             var delegateParameters = delegateInvoke.GetParameters();
             var methodParameters = methodInfo.GetParameters();
 
             var hasSameParameters = delegateParameters.Length - methodParameters.Length == 0 && ParametersAreEqual(delegateParameters, methodParameters);
             var hasInstance = instance is not null;
-            var hasInstanceType = delegateParameters.Length - methodParameters.Length == 1 && delegateParameters[0].ParameterType.IsAssignableFrom(methodInfo.DeclaringType);
+            var hasInstanceType = delegateParameters.Length - methodParameters.Length == 1 &&
+                                  (delegateParameters[0].ParameterType.IsAssignableFrom(methodInfo.DeclaringType) || methodInfo.DeclaringType.IsAssignableFrom(delegateParameters[0].ParameterType));
 
+            if (!hasInstance && !hasInstanceType && !methodInfo.IsStatic) return null;
+            if (hasInstance && methodInfo.IsStatic) return null;
+            if (hasInstance && !methodInfo.IsStatic && !methodInfo.DeclaringType.IsAssignableFrom(instance!.GetType())) return null;
+            
             if (hasSameParameters && hasInstanceType) return null;
             if (hasInstance && (hasInstanceType || !hasSameParameters)) return null;
             if (hasInstanceType && (hasInstance || hasSameParameters)) return null;
+            if (!hasInstanceType && !hasInstance && !hasSameParameters) return null;
 
             var instanceParameter = hasInstanceType
                 ? Expression.Parameter(delegateParameters[0].ParameterType, "instance")
@@ -153,25 +167,37 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 .Select((pi, i) => Expression.Parameter(pi.ParameterType, $"p{i}"))
                 .ToList();
             var inputParameters = returnParameters
-                .Select((pe, i) => Expression.Convert(pe, methodParameters[i].ParameterType))
+                .Select((pe, i) =>
+                {
+                    if (pe.IsByRef || pe.Type.Equals(methodParameters[i].ParameterType)) // TODO: Convert?
+                        return (Expression) pe;
+                    else
+                        return (Expression) Expression.Convert(pe, methodParameters[i].ParameterType);
+                })
                 .ToList();
 
             var call = hasInstance
-                ? Expression.Call(Expression.Constant(instance), methodInfo, inputParameters)
+                ? instance!.GetType().Equals(methodInfo.DeclaringType)
+                    ? Expression.Call(Expression.Constant(instance), methodInfo, inputParameters)
+                    : Expression.Call(Expression.Convert(Expression.Constant(instance), instance.GetType()), methodInfo, inputParameters)
                 : hasSameParameters
                     ? Expression.Call(methodInfo, inputParameters)
                     : hasInstanceType
-                        ? Expression.Call(Expression.Convert(instanceParameter, methodInfo.DeclaringType!), methodInfo, inputParameters)
+                        ? instanceParameter!.Type.Equals(methodInfo.DeclaringType)
+                            ? Expression.Call(instanceParameter, methodInfo, inputParameters)
+                            : Expression.Call(Expression.Convert(instanceParameter, methodInfo.DeclaringType), methodInfo, inputParameters)
                         : null;
 
             if (call is null) return null;
 
-            var body = Expression.Convert(call, methodInfo.ReturnType);
+            var body = call.Type.Equals(methodInfo.ReturnType) 
+                ? (Expression) call
+                : (Expression) Expression.Convert(call, methodInfo.ReturnType);
 
             try
             {
                 return Expression.Lambda<TDelegate>(body, hasInstanceType
-                    ? new List<ParameterExpression> { instanceParameter }.Concat(returnParameters)
+                    ? new List<ParameterExpression> { instanceParameter! }.Concat(returnParameters)
                     : returnParameters).Compile();
             }
             catch (Exception)
