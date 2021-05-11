@@ -45,9 +45,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #if !BANNERLORDBUTRSHARED_BUTTERLIB
     using SubModuleInfo_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.SubModuleInfo2;
     using ModuleInfo_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.ModuleInfo2;
+    using LoadType_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.LoadType;
 #else
     using SubModuleInfo_ = global::Bannerlord.ButterLib.Common.Helpers.ExtendedSubModuleInfo;
     using ModuleInfo_ = global::Bannerlord.ButterLib.Common.Helpers.ExtendedModuleInfo;
+    using LoadType_ = global::Bannerlord.ButterLib.Common.Helpers.LoadType;
 #endif
 
     using global::System.Diagnostics;
@@ -56,6 +58,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.Collections.Generic;
     using global::System.Linq;
     using global::System.IO;
+    using global::System.Text;
     using global::System.Reflection;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
@@ -204,6 +207,53 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 return true;
 
             return GetSubModuleValiditiy(instance, tag, value);
+        }
+
+        public static bool ValidateLoadOrder(Type subModuleType, out string report) => ValidateLoadOrder(GetModuleByType(subModuleType), out report);
+
+        public static bool ValidateLoadOrder(ModuleInfo_ moduleInfo, out string report)
+        {
+            const string SErrorModuleNotFound = @"{=FE6ya1gzZR}{MODULE} module was not found!";
+            const string SMessageContinue = @"{=eXs6FLm5DP}It's strongly recommended to terminate the game now. Do you wish to terminate it?";
+
+            var loadedModules = ModuleInfoHelper.GetLoadedModules().ToList();
+
+            var sb = new StringBuilder();
+
+            foreach (var dependedModule in moduleInfo.DependedModules)
+            {
+                var module = loadedModules.SingleOrDefault(x => x.Id == dependedModule.ModuleId);
+                var moduleIndex = module is not null ? loadedModules.IndexOf(module) : -1;
+                if (moduleIndex == -1)
+                {
+                    if (sb.Length != 0) sb.AppendLine();
+                    sb.AppendLine(TextObjectHelper.Create(SErrorModuleNotFound)?.SetTextVariable2("MODULE", dependedModule.ModuleId)?.ToString() ?? "ERROR");
+                }
+            }
+            foreach (var dependedModule in moduleInfo.DependedModuleMetadatas)
+            {
+                if (dependedModule.IsOptional || dependedModule.IsIncompatible || dependedModule.LoadType != LoadType_.LoadAfterThis) continue;
+                if (moduleInfo.DependedModules.Any(dm => dm.ModuleId == dependedModule.Id)) continue;
+
+                var module = loadedModules.SingleOrDefault(x => x.Id == dependedModule.Id);
+                var moduleIndex = module is not null ? loadedModules.IndexOf(module) : -1;
+                if (moduleIndex == -1)
+                {
+                    if (sb.Length != 0) sb.AppendLine();
+                    sb.AppendLine(TextObjectHelper.Create(SErrorModuleNotFound)?.SetTextVariable2("MODULE", dependedModule.Id)?.ToString() ?? "ERROR");
+                }
+            }
+
+            if (sb.Length > 0)
+            {
+                sb.AppendLine();
+                sb.AppendLine(TextObjectHelper.Create(SMessageContinue)?.ToString() ?? "ERROR");
+                report = sb.ToString();
+                return false;
+            }
+
+            report = null;
+            return true;
         }
     }
 }
