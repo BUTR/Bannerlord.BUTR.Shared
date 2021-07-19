@@ -124,7 +124,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static ModuleInfo_? GetModuleByType(Type type)
         {
-            if (!typeof(TaleWorlds.MountAndBlade.MBSubModuleBase).IsAssignableFrom(type) || string.IsNullOrWhiteSpace(type.Assembly.Location))
+            if (string.IsNullOrWhiteSpace(type.Assembly.Location))
                 return null;
 
             var fullAssemblyPath= Path.GetFullPath(type.Assembly.Location);
