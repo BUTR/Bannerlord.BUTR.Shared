@@ -222,15 +222,13 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
             var sb = new StringBuilder();
 
-            foreach (var dependedModule in moduleInfo.DependedModules)
+            void ValidateDependedModuleLoadBeforeThis(int dependedModuleIndex, string dependedModuleId)
             {
-                var module = loadedModules.SingleOrDefault(x => x.Id == dependedModule.ModuleId);
-                var dependedModuleIndex = module is not null ? loadedModules.IndexOf(module) : -1;
                 if (dependedModuleIndex == -1)
                 {
                     if (sb.Length != 0) sb.AppendLine();
                     sb.AppendLine(TextObjectHelper.Create(SErrorModuleNotFound)
-                        ?.SetTextVariable2("DEPENDENT_MODULE", dependedModule.ModuleId)
+                        ?.SetTextVariable2("DEPENDENT_MODULE", dependedModuleId)
                         ?.ToString() ?? "ERROR");
                 }
                 else if (dependedModuleIndex > moduleIndex)
@@ -238,10 +236,30 @@ namespace Bannerlord.BUTR.Shared.Helpers
                     if (sb.Length != 0) sb.AppendLine();
                     sb.AppendLine(TextObjectHelper.Create(SErrorOfficialModulesLoadedAfter)
                         ?.SetTextVariable2("MODULE", moduleInfo.Id)
-                        ?.SetTextVariable2("DEPENDENT_MODULE", dependedModule.ModuleId)
+                        ?.SetTextVariable2("DEPENDENT_MODULE", dependedModuleId)
                         ?.SetTextVariable2("NL", Environment.NewLine)
                         ?.ToString() ?? "ERROR");
                 }
+            }
+
+            void ValidateDependedModuleLoadAfterThis(int dependedModuleIndex, string dependedModuleId)
+            {
+                if (dependedModuleIndex < moduleIndex)
+                {
+                    if (sb.Length != 0) sb.AppendLine();
+                    sb.AppendLine(TextObjectHelper.Create(SErrorOfficialModulesLoadedBefore)
+                        ?.SetTextVariable2("MODULE", moduleInfo.Id)
+                        ?.SetTextVariable2("DEPENDENT_MODULE", dependedModuleId)
+                        ?.SetTextVariable2("NL", Environment.NewLine)
+                        ?.ToString() ?? "ERROR");
+                }
+            }
+
+            foreach (var dependedModule in moduleInfo.DependedModules)
+            {
+                var module = loadedModules.SingleOrDefault(x => x.Id == dependedModule.ModuleId);
+                var dependedModuleIndex = module is not null ? loadedModules.IndexOf(module) : -1;
+                ValidateDependedModuleLoadBeforeThis(dependedModuleIndex, dependedModule.ModuleId);
             }
             foreach (var dependedModule in moduleInfo.DependedModuleMetadatas)
             {
@@ -253,35 +271,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 if (dependedModule.LoadType == LoadType_.LoadBeforeThis)
                 {
                     if (moduleInfo.DependedModules.Any(dm => dm.ModuleId == dependedModule.Id)) continue;
-
-                    if (dependedModuleIndex == -1)
-                    {
-                        if (sb.Length != 0) sb.AppendLine();
-                        sb.AppendLine(TextObjectHelper.Create(SErrorModuleNotFound)
-                            ?.SetTextVariable2("DEPENDENT_MODULE", dependedModule.Id)
-                            ?.ToString() ?? "ERROR");
-                    }
-                    else if (dependedModuleIndex > moduleIndex)
-                    {
-                        if (sb.Length != 0) sb.AppendLine();
-                        sb.AppendLine(TextObjectHelper.Create(SErrorOfficialModulesLoadedAfter)
-                            ?.SetTextVariable2("MODULE", moduleInfo.Id)
-                            ?.SetTextVariable2("DEPENDENT_MODULE", dependedModule.Id)
-                            ?.SetTextVariable2("NL", Environment.NewLine)
-                            ?.ToString() ?? "ERROR");
-                    }
+                    ValidateDependedModuleLoadBeforeThis(dependedModuleIndex, dependedModule.Id);
                 }
                 else if (dependedModule.LoadType == LoadType_.LoadAfterThis)
                 {
-                    if (dependedModuleIndex < moduleIndex)
-                    {
-                        if (sb.Length != 0) sb.AppendLine();
-                        sb.AppendLine(TextObjectHelper.Create(SErrorOfficialModulesLoadedBefore)
-                            ?.SetTextVariable2("MODULE", moduleInfo.Id)
-                            ?.SetTextVariable2("DEPENDENT_MODULE", dependedModule.Id)
-                            ?.SetTextVariable2("NL", Environment.NewLine)
-                            ?.ToString() ?? "ERROR");
-                    }
+                    ValidateDependedModuleLoadAfterThis(dependedModuleIndex, dependedModule.Id);
                 }
             }
 
