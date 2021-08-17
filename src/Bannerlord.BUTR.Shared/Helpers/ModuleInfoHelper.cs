@@ -222,6 +222,16 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
             var sb = new StringBuilder();
 
+            void ReportLoadingIssue(string reason, string dependedModuleId)
+            {
+                if (sb.Length != 0) sb.AppendLine();
+                sb.AppendLine(TextObjectHelper.Create(reason)
+                    ?.SetTextVariable2("MODULE", moduleInfo.Id)
+                    ?.SetTextVariable2("DEPENDENT_MODULE", dependedModuleId)
+                    ?.SetTextVariable2("NL", Environment.NewLine)
+                    ?.ToString() ?? "ERROR");
+            }
+
             void ValidateDependedModuleLoadBeforeThis(int dependedModuleIndex, string dependedModuleId)
             {
                 if (dependedModuleIndex == -1)
@@ -233,12 +243,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 }
                 else if (dependedModuleIndex > moduleIndex)
                 {
-                    if (sb.Length != 0) sb.AppendLine();
-                    sb.AppendLine(TextObjectHelper.Create(SErrorOfficialModulesLoadedAfter)
-                        ?.SetTextVariable2("MODULE", moduleInfo.Id)
-                        ?.SetTextVariable2("DEPENDENT_MODULE", dependedModuleId)
-                        ?.SetTextVariable2("NL", Environment.NewLine)
-                        ?.ToString() ?? "ERROR");
+                    ReportLoadingIssue(SErrorOfficialModulesLoadedAfter, dependedModuleId);
                 }
             }
 
@@ -246,12 +251,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             {
                 if (dependedModuleIndex < moduleIndex)
                 {
-                    if (sb.Length != 0) sb.AppendLine();
-                    sb.AppendLine(TextObjectHelper.Create(SErrorOfficialModulesLoadedBefore)
-                        ?.SetTextVariable2("MODULE", moduleInfo.Id)
-                        ?.SetTextVariable2("DEPENDENT_MODULE", dependedModuleId)
-                        ?.SetTextVariable2("NL", Environment.NewLine)
-                        ?.ToString() ?? "ERROR");
+                    ReportLoadingIssue(SErrorOfficialModulesLoadedBefore, dependedModuleId);
                 }
             }
 
