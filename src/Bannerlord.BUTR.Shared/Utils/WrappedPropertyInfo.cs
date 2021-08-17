@@ -44,12 +44,15 @@ namespace Bannerlord.BUTR.Shared.Utils
 {
     using global::System;
     using global::System.Collections.Generic;
+    using global::System.ComponentModel;
     using global::System.Globalization;
     using global::System.Linq;
     using global::System.Reflection;
 
-    internal sealed class WrappedPropertyInfo : PropertyInfo
+    internal sealed class WrappedPropertyInfo : PropertyInfo, INotifyPropertyChanged
     {
+        public event PropertyChangedEventHandler? PropertyChanged;
+        
         private readonly object _instance;
         private readonly PropertyInfo _propertyInfoImplementation;
 
@@ -99,9 +102,16 @@ namespace Bannerlord.BUTR.Shared.Utils
         public override object? GetValue(object? obj, BindingFlags invokeAttr, Binder? binder, object?[]? index, CultureInfo? culture) =>
             _propertyInfoImplementation.GetValue(_instance, invokeAttr, binder, index, culture);
         public override bool IsDefined(Type attributeType, bool inherit) => _propertyInfoImplementation.IsDefined(attributeType, inherit);
-        public override void SetValue(object? obj, object? value, object?[]? index) => _propertyInfoImplementation.SetValue(_instance, value, index);
-        public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder? binder, object?[]? index, CultureInfo? culture) =>
+        public override void SetValue(object? obj, object? value, object?[]? index)
+        {
+            _propertyInfoImplementation.SetValue(_instance, value, index);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(_propertyInfoImplementation.Name));
+        }
+        public override void SetValue(object? obj, object? value, BindingFlags invokeAttr, Binder? binder, object?[]? index, CultureInfo? culture)
+        {
             _propertyInfoImplementation.SetValue(_instance, value, invokeAttr, binder, index, culture);
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(_propertyInfoImplementation.Name));
+        }
 
         public override string? ToString() => _propertyInfoImplementation.ToString();
         public override bool Equals(object? obj) => obj switch
