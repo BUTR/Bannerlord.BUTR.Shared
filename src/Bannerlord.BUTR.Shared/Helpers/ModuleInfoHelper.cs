@@ -213,45 +213,81 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static bool ValidateLoadOrder(ModuleInfo_ moduleInfo, out string report)
         {
-            const string SErrorModuleNotFound = @"{=FE6ya1gzZR}{DEPENDENT_MODULE} module was not found!";
-            const string SErrorOfficialModulesLoadedBefore = @"{=5G9zffrgMh}{MODULE} is loaded before the {DEPENDENT_MODULE}!{NL}Make sure {MODULE} is loaded after it!";
-            const string SErrorOfficialModulesLoadedAfter = @"{=UZ8zfvudMs}{MODULE} is loaded after the {DEPENDENT_MODULE}!{NL}Make sure {MODULE} is loaded before it!";
+            const string SErrorModuleNotFound = @"{=FE6ya1gzZR}{REQUIRED_MODULE} module was not found!";
+            const string SErrorIncompatibleModuleFound = @"{=EvI6KPAqTT}Incompatible module {DENIED_MODULE} was found!";
+            const string SErrorWrongModuleOrderTooEarly = @"{=5G9zffrgMh}{MODULE} is loaded before the {REQUIRED_MODULE}!{NL}Make sure {MODULE} is loaded after it!";
+            const string SErrorWrongModuleOrderTooLate = @"{=UZ8zfvudMs}{MODULE} is loaded after the {REQUIRED_MODULE}!{NL}Make sure {MODULE} is loaded before it!";
+            const string SErrorMutuallyExclusiveDirectives = @"{=FcR4BXnhx8}{MODULE} has mutually exclusive mod order directives specified for the {REQUIRED_MODULE}!";
 
             var loadedModules = ModuleInfoHelper.GetLoadedModules().ToList();
             var moduleIndex = loadedModules.IndexOf(moduleInfo);
 
             var sb = new StringBuilder();
 
-            void ReportLoadingIssue(string reason, string dependedModuleId)
+            void ReportMissingModule(string requiredModuleId)
+            {
+                if (sb.Length != 0) sb.AppendLine();
+                sb.AppendLine(TextObjectHelper.Create(SErrorModuleNotFound)
+                    ?.SetTextVariable2("REQUIRED_MODULE", requiredModuleId)
+                    ?.ToString() ?? "ERROR");
+            }
+
+            void ReportIncompatibleModule(string deniedModuleId)
+            {
+                if (sb.Length != 0) sb.AppendLine();
+                sb.AppendLine(TextObjectHelper.Create(SErrorIncompatibleModuleFound)
+                    ?.SetTextVariable2("DENIED_MODULE", deniedModuleId)
+                    ?.ToString() ?? "ERROR");
+            }
+
+            void ReportLoadingOrderIssue(string reason, string requiredModuleId)
             {
                 if (sb.Length != 0) sb.AppendLine();
                 sb.AppendLine(TextObjectHelper.Create(reason)
                     ?.SetTextVariable2("MODULE", moduleInfo.Id)
-                    ?.SetTextVariable2("DEPENDENT_MODULE", dependedModuleId)
+                    ?.SetTextVariable2("REQUIRED_MODULE", requiredModuleId)
                     ?.SetTextVariable2("NL", Environment.NewLine)
                     ?.ToString() ?? "ERROR");
             }
 
-            void ValidateDependedModuleLoadBeforeThis(int dependedModuleIndex, string dependedModuleId)
+            void ReportMutuallyExclusiveDirectives(string requiredModuleId)
             {
-                if (dependedModuleIndex == -1)
+                if (sb.Length != 0) sb.AppendLine();
+                sb.AppendLine(TextObjectHelper.Create(SErrorMutuallyExclusiveDirectives)
+                    ?.SetTextVariable2("MODULE", moduleInfo.Id)
+                    ?.SetTextVariable2("REQUIRED_MODULE", requiredModuleId)
+                    ?.ToString() ?? "ERROR");
+            }
+
+            void ValidateDependedModuleCompatibility(int deniedModuleIndex, string deniedModuleId)
+            {
+                if (deniedModuleIndex != -1)
                 {
-                    if (sb.Length != 0) sb.AppendLine();
-                    sb.AppendLine(TextObjectHelper.Create(SErrorModuleNotFound)
-                        ?.SetTextVariable2("DEPENDENT_MODULE", dependedModuleId)
-                        ?.ToString() ?? "ERROR");
-                }
-                else if (dependedModuleIndex > moduleIndex)
-                {
-                    ReportLoadingIssue(SErrorOfficialModulesLoadedAfter, dependedModuleId);
+                    ReportIncompatibleModule(deniedModuleId);
                 }
             }
 
-            void ValidateDependedModuleLoadAfterThis(int dependedModuleIndex, string dependedModuleId)
+            void ValidateDependedModuleLoadBeforeThis(int requiredModuleIndex, string requiredModuleId, bool isOptional = false)
             {
-                if (dependedModuleIndex < moduleIndex)
+                if (!isOptional && requiredModuleIndex == -1)
                 {
-                    ReportLoadingIssue(SErrorOfficialModulesLoadedBefore, dependedModuleId);
+                    ReportMissingModule(requiredModuleId);
+                }
+                else if (requiredModuleIndex > moduleIndex)
+                {
+                    ReportLoadingOrderIssue(SErrorWrongModuleOrderTooEarly, requiredModuleId);
+                }
+            }
+
+            void ValidateDependedModuleLoadAfterThis(int requiredModuleIndex, string requiredModuleId, bool isOptional)
+            {
+                if (requiredModuleIndex == -1)
+                {
+                    if (!isOptional) ReportMissingModule(requiredModuleId);
+                }
+                else if (requiredModuleIndex < moduleIndex)
+                {
+                    ReportLoadingOrderIssue(SErrorWrongModuleOrderTooLate, requiredModuleId);
                 }
             }
 
@@ -263,19 +299,31 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
             foreach (var dependedModule in moduleInfo.DependedModuleMetadatas)
             {
-                if (dependedModule.IsOptional || dependedModule.IsIncompatible) continue;
-
                 var module = loadedModules.SingleOrDefault(x => x.Id == dependedModule.Id);
                 var dependedModuleIndex = module is not null ? loadedModules.IndexOf(module) : -1;
-                
-                if (dependedModule.LoadType == LoadType_.LoadBeforeThis)
+
+                if (dependedModule.IsIncompatible)
+                {
+                    if (moduleInfo.DependedModules.Any(dm => dm.ModuleId == dependedModule.Id))
+                    {
+                        ReportMutuallyExclusiveDirectives(dependedModule.Id);
+                        continue;
+                    }
+                    ValidateDependedModuleCompatibility(dependedModuleIndex, dependedModule.Id);
+                }
+                else if (dependedModule.LoadType == LoadType_.LoadBeforeThis)
                 {
                     if (moduleInfo.DependedModules.Any(dm => dm.ModuleId == dependedModule.Id)) continue;
-                    ValidateDependedModuleLoadBeforeThis(dependedModuleIndex, dependedModule.Id);
+                    ValidateDependedModuleLoadBeforeThis(dependedModuleIndex, dependedModule.Id, dependedModule.IsOptional);
                 }
                 else if (dependedModule.LoadType == LoadType_.LoadAfterThis)
                 {
-                    ValidateDependedModuleLoadAfterThis(dependedModuleIndex, dependedModule.Id);
+                    if (moduleInfo.DependedModules.Any(dm => dm.ModuleId == dependedModule.Id) || (moduleInfo.DependedModuleMetadatas.Any(dm => dm.Id == dependedModule.Id && dm.LoadType == LoadType_.LoadBeforeThis)))
+                    {
+                        ReportMutuallyExclusiveDirectives(dependedModule.Id);
+                        continue;
+                    }
+                    ValidateDependedModuleLoadAfterThis(dependedModuleIndex, dependedModule.Id, dependedModule.IsOptional);
                 }
             }
 
