@@ -2,7 +2,13 @@ name: Publish
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+    paths:
+      - '.github/workflows/publish.yml'
+      - 'src/**'
+      - 'tests/**'
+      - 'build/**'
 
 env:
   # Disable the .NET logo in the console output.
@@ -18,7 +24,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Setup
-      uses: butr/actions-common-setup@v1.1
+      uses: butr/actions-common-setup@v1.2
       with:
         github-token: ${{secrets.GITHUB_TOKEN}}
 
