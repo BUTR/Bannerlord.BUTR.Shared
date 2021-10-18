@@ -74,6 +74,56 @@ namespace Bannerlord.ButterLib.Common.Extensions
             key = tuple.Key;
             value = tuple.Value;
         }
+
+        /// <summary>
+        /// Adds all the new entries from the specified <see cref="T:System.Collections.Generic.Dictionary`2" /> to the targeted one.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key used in the <see cref="T:System.Collections.Generic.Dictionary`2" />.</typeparam>
+        /// <typeparam name="TValue">The type of the value used in the <see cref="T:System.Collections.Generic.Dictionary`2" />.</typeparam>
+        /// <param name="destinationDict">The <see cref="T:System.Collections.Generic.Dictionary`2" /> to add new entries to.</param>
+        /// <param name="otherDict">The <see cref="T:System.Collections.Generic.Dictionary`2" /> with the new entries to be added.</param>
+        /// <param name="overrideDuplicates">
+        /// Controls the behavior of the method when dealing with duplicates.
+        /// If set to true, entries from the added <see cref="T:System.Collections.Generic.Dictionary`2" /> will overwrite
+        /// the value of entries with the same key in the target <see cref="T:System.Collections.Generic.Dictionary`2" />.
+        /// Otherwise, duplicates will be ignored.
+        /// </param>
+        /// <remarks>
+        /// Use this if the added <see cref="T:System.Collections.Generic.Dictionary`2" /> may contain duplicates.
+        /// Initiates both dictionaries if they are null.
+        /// </remarks>
+        public static void AddRangeCautiously<TKey, TValue>(this Dictionary<TKey, TValue> destinationDict, Dictionary<TKey, TValue> otherDict, bool overrideDuplicates = false)
+        {
+            destinationDict ??= new();
+            otherDict ??= new();
+            foreach (KeyValuePair<TKey, TValue> entry in otherDict)
+            {
+                if (!destinationDict.ContainsKey(entry.Key))
+                {
+                    destinationDict.Add(entry.Key, entry.Value);
+                }
+                else if (overrideDuplicates)
+                {
+                    destinationDict[entry.Key] = entry.Value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// Adds all the new entries from the specified <see cref="T:System.Collections.Generic.Dictionary`2" /> to the targeted one.
+        /// </summary>
+        /// <typeparam name="TKey">The type of the key used in the <see cref="T:System.Collections.Generic.Dictionary`2" />.</typeparam>
+        /// <typeparam name="TValue">The type of the value used in the <see cref="T:System.Collections.Generic.Dictionary`2" />.</typeparam>
+        /// <param name="destinationDict">The <see cref="T:System.Collections.Generic.Dictionary`2" /> to add new entries to.</param>
+        /// <param name="otherDict">The <see cref="T:System.Collections.Generic.Dictionary`2" /> with the new entries to be added.</param>
+        /// <remarks>Use this for improved performance when it is certain that the <see cref="T:System.Collections.Generic.Dictionary`2" /> being added will not contain any duplicates.</remarks>
+        public static void AddRange<TKey, TValue>(this Dictionary<TKey, TValue> destinationDict, Dictionary<TKey, TValue> otherDict)
+        {
+            foreach (KeyValuePair<TKey, TValue> entry in otherDict)
+            {
+                destinationDict.Add(entry.Key, entry.Value);
+            }
+        }
     }
 }
 
