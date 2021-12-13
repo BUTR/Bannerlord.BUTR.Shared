@@ -27,11 +27,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Bannerlord.ModuleManager.Source" Version="1.0.71" />
     <PackageReference Include="NuGetizer" Version="0.7.5" />
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Bannerlord.ModuleManager.Source" Version="1.0.71" Pack="true" />
     <PackageReference Include="Bannerlord.ReferenceAssemblies.Core.EarlyAccess" Version="1.1.0.*" PrivateAssets="all" />
     <PackageReference Include="IsExternalInit" Version="1.0.1">
       <PrivateAssets>all</PrivateAssets>

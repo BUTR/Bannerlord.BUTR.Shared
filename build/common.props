@@ -22,10 +22,12 @@
     <BuildOnPack>false</BuildOnPack>
     <PackOnBuild>false</PackOnBuild>
     <PackBuildOutput>false</PackBuildOutput>
+    <PackSymbols>false</PackSymbols>
     <PackCompile>true</PackCompile>
     <PackEmbeddedResource>true</PackEmbeddedResource>
-    <EnablePackCleanup>false</EnablePackCleanup>
-    <EnablePackInference>false</EnablePackInference>
+    <PackDependencies>false</PackDependencies>
+    <EnablePackCleanup>true</EnablePackCleanup>
+    <EnablePackInference>true</EnablePackInference>
 
     <BaseIntermediateOutputPath Condition="'$(BaseIntermediateOutputPath)' == ''">obj</BaseIntermediateOutputPath>
   </PropertyGroup>
