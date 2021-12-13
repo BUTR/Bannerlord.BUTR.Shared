@@ -88,19 +88,26 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 ReflectionHelper.GetDelegateObjectInstance<GetSubModuleValiditiyDelegate>(_moduleType.GetMethod("GetSubModuleValiditiy"));
         }
 
+        public static ModuleInfo_? LoadFromId(string id)
+        {
+            var path = GetPath(id);
+            if (TryRead(path, out var xml))
+            {
+                var doc = new XmlDocument();
+                doc.LoadXml(xml);
+                return ModuleInfo_.FromXml(doc);
+            }
+            return null;
+        }
+
         public static IEnumerable<ModuleInfo_> GetLoadedModules()
         {
             if (GetModulesNames == null) yield break;
 
             foreach (string modulesName in GetModulesNames())
             {
-                var path = GetPath(modulesName);
-                if (TryRead(path, out var xml))
-                {
-                    var doc = new XmlDocument();
-                    doc.LoadXml(xml);
-                    yield return ModuleInfo_.FromXml(doc);
-                }
+                if (LoadFromId(modulesName) is { } moduleInfo)
+                    yield return moduleInfo;
             }
         }
 
@@ -148,7 +155,6 @@ namespace Bannerlord.BUTR.Shared.Helpers
             {
                 var directoryName = System.IO.Path.GetDirectoryName(text);
                 var path = GetPath(Path.Combine(directoryName, "SubModule.xml"));
-                var Folder = Path.GetDirectoryName(path);
                 if (TryRead(path, out var xml))
                 {
                     var xmlDocument = new XmlDocument();
