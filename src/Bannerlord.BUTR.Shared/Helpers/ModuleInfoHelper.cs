@@ -36,21 +36,17 @@
 // SOFTWARE.
 #endregion
 
+using System.Xml;
+
 #if !BANNERLORDBUTRSHARED_DISABLE
 #nullable enable
 #pragma warning disable
 
 namespace Bannerlord.BUTR.Shared.Helpers
 {
-#if !BANNERLORDBUTRSHARED_BUTTERLIB
-    using SubModuleInfo_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.SubModuleInfo2;
-    using ModuleInfo_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.ModuleInfo2;
-    using LoadType_ = global::Bannerlord.BUTR.Shared.ModuleInfoExtended.LoadType;
-#else
-    using SubModuleInfo_ = global::Bannerlord.ButterLib.Common.Helpers.ExtendedSubModuleInfo;
-    using ModuleInfo_ = global::Bannerlord.ButterLib.Common.Helpers.ExtendedModuleInfo;
-    using LoadType_ = global::Bannerlord.ButterLib.Common.Helpers.LoadType;
-#endif
+    using ModuleInfo_ = global::Bannerlord.ModuleManager.ModuleInfoExtended;
+    using LoadType_ = global::Bannerlord.ModuleManager.LoadType;
+    using SubModuleTags = global::Bannerlord.ModuleManager.SubModuleTags;
 
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
@@ -73,7 +69,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static readonly Type? _moduleHelperType = Type.GetType("TaleWorlds.ModuleManager.ModuleHelper, TaleWorlds.ModuleManager", false);
         private static readonly FieldInfo? _platformModuleExtensionField = _moduleHelperType?.GetField("_platformModuleExtension");
 
-        private delegate bool GetSubModuleValiditiyDelegate(object instance, SubModuleInfo_.SubModuleTags tag, string value);
+        private delegate bool GetSubModuleValiditiyDelegate(object instance, SubModuleTags tag, string value);
         private delegate object GetCurrentModuleDelegate();
         private static readonly Type? _moduleType = Type.GetType("TaleWorlds.MountAndBlade.Module, TaleWorlds.MountAndBlade", false);
         private static readonly GetSubModuleValiditiyDelegate? GetSubModuleValiditiy;
@@ -98,9 +94,13 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
             foreach (string modulesName in GetModulesNames())
             {
-                var moduleInfo = new ModuleInfo_();
-                moduleInfo.Load(modulesName);
-                yield return moduleInfo;
+                var path = GetPath(modulesName);
+                if (TryRead(path, out var xml))
+                {
+                    var doc = new XmlDocument();
+                    doc.LoadXml(xml);
+                    yield return ModuleInfo_.FromXml(doc);
+                }
             }
         }
 
@@ -144,16 +144,17 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         private static IEnumerable<ModuleInfo_> GetPhysicalModules()
         {
-            foreach (string text in GetModulePaths(ModuleInfo_.PathPrefix, 1).ToArray<string>())
+            foreach (string text in GetModulePaths(PathPrefix(), 1).ToArray<string>())
             {
-                var moduleInfo = new ModuleInfo_();
-                try
+                var directoryName = System.IO.Path.GetDirectoryName(text);
+                var path = GetPath(Path.Combine(directoryName, "SubModule.xml"));
+                var Folder = Path.GetDirectoryName(path);
+                if (TryRead(path, out var xml))
                 {
-                    string directoryName = System.IO.Path.GetDirectoryName(text);
-                    moduleInfo.LoadWithFullPath(directoryName);
+                    var xmlDocument = new XmlDocument();
+                    xmlDocument.Load(path);
+                    yield return ModuleInfo_.FromXml(xmlDocument);
                 }
-                catch { }
-                yield return moduleInfo;
             }
         }
 
@@ -173,13 +174,12 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
             foreach (string path in modulePaths)
             {
-                var moduleInfo = new ModuleInfo_();
-                try
+                if (TryRead(path, out var xml))
                 {
-                    moduleInfo.LoadWithFullPath(path);
+                    var doc = new XmlDocument();
+                    doc.LoadXml(xml);
+                    yield return ModuleInfo_.FromXml(doc);
                 }
-                catch { }
-                yield return moduleInfo;
             }
         }
 
@@ -201,7 +201,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
         }
 
-        internal static bool GetSubModuleTagValiditiy(SubModuleInfo_.SubModuleTags tag, string value)
+        internal static bool GetSubModuleTagValiditiy(SubModuleTags tag, string value)
         {
             if (GetSubModuleValiditiy is null || GetCurrentModule is null || GetCurrentModule() is not { } instance)
                 return true;
@@ -291,20 +291,20 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 }
             }
 
-            foreach (var dependedModule in moduleInfo.DependedModules)
+            foreach (var dependedModule in moduleInfo.DependentModules)
             {
-                var module = loadedModules.SingleOrDefault(x => x.Id == dependedModule.ModuleId);
+                var module = loadedModules.SingleOrDefault(x => x.Id == dependedModule.Id);
                 var dependedModuleIndex = module is not null ? loadedModules.IndexOf(module) : -1;
-                ValidateDependedModuleLoadBeforeThis(dependedModuleIndex, dependedModule.ModuleId);
+                ValidateDependedModuleLoadBeforeThis(dependedModuleIndex, dependedModule.Id);
             }
-            foreach (var dependedModule in moduleInfo.DependedModuleMetadatas)
+            foreach (var dependedModule in moduleInfo.DependentModuleMetadatas)
             {
                 var module = loadedModules.SingleOrDefault(x => x.Id == dependedModule.Id);
                 var dependedModuleIndex = module is not null ? loadedModules.IndexOf(module) : -1;
 
                 if (dependedModule.IsIncompatible)
                 {
-                    if (moduleInfo.DependedModules.Any(dm => dm.ModuleId == dependedModule.Id))
+                    if (moduleInfo.DependentModules.Any(dm => dm.Id == dependedModule.Id))
                     {
                         ReportMutuallyExclusiveDirectives(dependedModule.Id);
                         continue;
@@ -313,12 +313,12 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 }
                 else if (dependedModule.LoadType == LoadType_.LoadBeforeThis)
                 {
-                    if (moduleInfo.DependedModules.Any(dm => dm.ModuleId == dependedModule.Id)) continue;
+                    if (moduleInfo.DependentModules.Any(dm => dm.Id == dependedModule.Id)) continue;
                     ValidateDependedModuleLoadBeforeThis(dependedModuleIndex, dependedModule.Id, dependedModule.IsOptional);
                 }
                 else if (dependedModule.LoadType == LoadType_.LoadAfterThis)
                 {
-                    if (moduleInfo.DependedModules.Any(dm => dm.ModuleId == dependedModule.Id) || (moduleInfo.DependedModuleMetadatas.Any(dm => dm.Id == dependedModule.Id && dm.LoadType == LoadType_.LoadBeforeThis)))
+                    if (moduleInfo.DependentModules.Any(dm => dm.Id == dependedModule.Id) || (moduleInfo.DependentModuleMetadatas.Any(dm => dm.Id == dependedModule.Id && dm.LoadType == LoadType_.LoadBeforeThis)))
                     {
                         ReportMutuallyExclusiveDirectives(dependedModule.Id);
                         continue;
@@ -335,6 +335,26 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
             report = null;
             return true;
+        }
+
+
+        private static string PathPrefix() => Path.Combine(TaleWorlds.Library.BasePath.Name, "Modules");
+        private static string GetPath(string id) => Path.Combine(PathPrefix(), id, "SubModule.xml");
+
+        private static bool TryRead(string path, [NotNullWhen(true)] out string? content)
+        {
+            try
+            {
+                using var xml = new StreamReader(path);
+                content = xml.ReadToEnd();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                content = null;
+                return false;
+
+            }
         }
     }
 }

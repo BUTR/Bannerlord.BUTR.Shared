@@ -40,11 +40,7 @@
 #nullable enable
 #pragma warning disable
 
-#if !BANNERLORDBUTRSHARED_BUTTERLIB
 namespace Bannerlord.BUTR.Shared.Extensions
-#else
-namespace Bannerlord.ButterLib.Common.Extensions
-#endif
 {
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
@@ -53,12 +49,7 @@ namespace Bannerlord.ButterLib.Common.Extensions
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-#if !BANNERLORDBUTRSHARED_BUTTERLIB
-    internal
-#else
-    public
-#endif
-    static class DictionaryExtensions
+    internal static class DictionaryExtensions
     {
         /// <summary>
         /// Deconstructs a <see cref="T:System.Collections.Generic.KeyValuePair`2" /> into two variables
