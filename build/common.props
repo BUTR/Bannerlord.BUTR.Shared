@@ -23,8 +23,8 @@
     <PackOnBuild>false</PackOnBuild>
     <PackBuildOutput>false</PackBuildOutput>
     <PackSymbols>false</PackSymbols>
-    <PackCompile>true</PackCompile>
-    <PackEmbeddedResource>true</PackEmbeddedResource>
+    <PackCompile>false</PackCompile>
+    <PackEmbeddedResource>false</PackEmbeddedResource>
     <PackDependencies>false</PackDependencies>
     <EnablePackCleanup>true</EnablePackCleanup>
     <EnablePackInference>true</EnablePackInference>
