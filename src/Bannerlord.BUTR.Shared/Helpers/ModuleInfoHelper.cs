@@ -347,7 +347,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static string PathPrefix() => Path.Combine(TaleWorlds.Library.BasePath.Name, "Modules");
         private static string GetPath(string id) => Path.Combine(PathPrefix(), id, "SubModule.xml");
 
-        private static bool TryRead(string path, [NotNullWhen(true)] out string? content)
+        private static bool TryRead(string path, out string? content)
         {
             try
             {
