@@ -36,8 +36,6 @@
 // SOFTWARE.
 #endregion
 
-using System.Linq;
-
 #if !BANNERLORDBUTRSHARED_DISABLE
 #nullable enable
 #pragma warning disable
@@ -54,6 +52,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
     using global::System.Reflection;
+    using global::System.Linq;
+
 
     using global::TaleWorlds.Library;
     using global::TaleWorlds.Engine;

@@ -36,8 +36,6 @@
 // SOFTWARE.
 #endregion
 
-using System.Xml;
-
 #if !BANNERLORDBUTRSHARED_DISABLE
 #nullable enable
 #pragma warning disable
@@ -46,6 +44,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 {
     using ModuleInfo_ = global::Bannerlord.ModuleManager.ModuleInfoExtended;
     using LoadType_ = global::Bannerlord.ModuleManager.LoadType;
+    using SubModuleInfo_ = global::Bannerlord.ModuleManager.SubModuleInfoExtended;
     using SubModuleTags = global::Bannerlord.ModuleManager.SubModuleTags;
 
     using global::System.Diagnostics;
@@ -56,6 +55,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.IO;
     using global::System.Text;
     using global::System.Reflection;
+    using global::System.Xml;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
@@ -213,6 +213,21 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 return true;
 
             return GetSubModuleValiditiy(instance, tag, value);
+        }
+
+        public static bool CheckIfSubModuleCanBeLoadable(SubModuleInfo_ subModuleInfo)
+        {
+            if (subModuleInfo.Tags.Count > 0)
+            {
+                foreach (var (key, value) in subModuleInfo.Tags)
+                {
+                    if (!GetSubModuleTagValiditiy(key, value))
+                    {
+                        return false;
+                    }
+                }
+            }
+            return true;
         }
 
         public static bool ValidateLoadOrder(Type subModuleType, out string report) => ValidateLoadOrder(GetModuleByType(subModuleType), out report);
