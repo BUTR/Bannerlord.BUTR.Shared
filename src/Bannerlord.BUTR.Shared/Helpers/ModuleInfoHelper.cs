@@ -57,6 +57,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.Reflection;
     using global::System.Xml;
 
+    using global::TaleWorlds.Library;
+    using global::TaleWorlds.MountAndBlade;
+
+    using Module = TaleWorlds.MountAndBlade.Module;
+
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
@@ -69,10 +74,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static readonly Type? _moduleHelperType = Type.GetType("TaleWorlds.ModuleManager.ModuleHelper, TaleWorlds.ModuleManager", false);
         private static readonly FieldInfo? _platformModuleExtensionField = _moduleHelperType?.GetField("_platformModuleExtension");
 
-        private delegate bool GetSubModuleValiditiyDelegate(object instance, SubModuleTags tag, string value);
         private delegate object GetCurrentModuleDelegate();
         private static readonly Type? _moduleType = Type.GetType("TaleWorlds.MountAndBlade.Module, TaleWorlds.MountAndBlade", false);
-        private static readonly GetSubModuleValiditiyDelegate? GetSubModuleValiditiy;
         private static readonly GetCurrentModuleDelegate? GetCurrentModule;
 
         static ModuleInfoHelper()
@@ -84,8 +87,6 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
             GetCurrentModule =
                 ReflectionHelper.GetDelegate<GetCurrentModuleDelegate>(_moduleType?.GetProperty("CurrentModule", BindingFlags.Public | BindingFlags.Static)?.GetMethod);
-            GetSubModuleValiditiy =
-                ReflectionHelper.GetDelegateObjectInstance<GetSubModuleValiditiyDelegate>(_moduleType.GetMethod("GetSubModuleValiditiy"));
         }
 
         public static ModuleInfo_? LoadFromId(string id)
@@ -207,28 +208,38 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
         }
 
-        internal static bool GetSubModuleTagValiditiy(SubModuleTags tag, string value)
-        {
-            if (GetSubModuleValiditiy is null || GetCurrentModule is null || GetCurrentModule() is not { } instance)
-                return true;
-
-            return GetSubModuleValiditiy(instance, tag, value);
-        }
-
-        public static bool CheckIfSubModuleCanBeLoadable(SubModuleInfo_ subModuleInfo)
+        public static bool CheckIfSubModuleCanBeLoaded(SubModuleInfo_ subModuleInfo)
         {
             if (subModuleInfo.Tags.Count > 0)
             {
-                foreach (var (key, value) in subModuleInfo.Tags)
+                foreach (var (tag, value) in subModuleInfo.Tags)
                 {
-                    if (!GetSubModuleTagValiditiy(key, value))
+                    if (!GetSubModuleTagValiditiy(tag, value))
                     {
                         return false;
                     }
                 }
+                return true;
             }
             return true;
         }
+
+        public static bool GetSubModuleTagValiditiy(SubModuleTags tag, string value) => tag switch
+        {
+            SubModuleTags.RejectedPlatform => !Enum.TryParse<Platform>(value, out var platform) || ApplicationPlatform.CurrentPlatform != platform,
+            SubModuleTags.ExclusivePlatform => !Enum.TryParse<Platform>(value, out var platform) || ApplicationPlatform.CurrentPlatform == platform,
+            SubModuleTags.DependantRuntimeLibrary => !Enum.TryParse<Runtime>(value, out var runtime) || ApplicationPlatform.CurrentRuntimeLibrary == runtime,
+            SubModuleTags.IsNoRenderModeElement => value.Equals("false"),
+            SubModuleTags.DedicatedServerType => value.ToLower() switch
+            {
+                "none" => Module.CurrentModule.StartupInfo.DedicatedServerType == DedicatedServerType.None,
+                "both" => Module.CurrentModule.StartupInfo.DedicatedServerType == DedicatedServerType.None,
+                "custom" => Module.CurrentModule.StartupInfo.DedicatedServerType == DedicatedServerType.Custom,
+                "matchmaker" => Module.CurrentModule.StartupInfo.DedicatedServerType == DedicatedServerType.Matchmaker,
+                _ => false
+            },
+            _ => true
+        };
 
         public static bool ValidateLoadOrder(Type subModuleType, out string report) => ValidateLoadOrder(GetModuleByType(subModuleType), out report);
 
