@@ -31,7 +31,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Bannerlord.ModuleManager.Source" Version="1.0.75" Pack="true" />
+    <PackageReference Include="Bannerlord.ModuleManager.Source" Version="2.0.81" Pack="true" />
     <PackageReference Include="Bannerlord.ReferenceAssemblies.Core.EarlyAccess" Version="1.1.0.*" PrivateAssets="all" />
     <PackageReference Include="IsExternalInit" Version="1.0.2">
       <PrivateAssets>all</PrivateAssets>
