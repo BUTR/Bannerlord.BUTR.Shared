@@ -47,6 +47,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using SubModuleInfo_ = global::Bannerlord.ModuleManager.SubModuleInfoExtended;
     using SubModuleTags = global::Bannerlord.ModuleManager.SubModuleTags;
 
+    using global::Bannerlord.BUTR.Shared.Extensions;
+
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
     using global::System;
@@ -212,11 +214,17 @@ namespace Bannerlord.BUTR.Shared.Helpers
         {
             if (subModuleInfo.Tags.Count > 0)
             {
-                foreach (var (tag, value) in subModuleInfo.Tags)
+                foreach (var (key, values) in subModuleInfo.Tags)
                 {
-                    if (!GetSubModuleTagValiditiy(tag, value))
+                    if (!Enum.TryParse<SubModuleTags>(key, out var tag))
+                        continue;
+
+                    foreach (var value in values)
                     {
-                        return false;
+                        if (!GetSubModuleTagValiditiy(tag, value))
+                        {
+                            return false;
+                        }
                     }
                 }
                 return true;
