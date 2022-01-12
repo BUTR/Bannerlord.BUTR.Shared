@@ -7,7 +7,7 @@
     <Version>2.0.0.$(GITHUB_RUN_NUMBER)</Version>
     <TargetFramework>netstandard2.0</TargetFramework>
     <PlatformTarget>x64</PlatformTarget>
-    <LangVersion>10.0</LangVersion>
+    <LangVersion>9.0</LangVersion>
     <Nullable>enable</Nullable>
 
     <Authors>BUTR</Authors>
