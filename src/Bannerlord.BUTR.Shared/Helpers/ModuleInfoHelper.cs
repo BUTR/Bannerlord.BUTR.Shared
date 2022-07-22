@@ -137,12 +137,15 @@ namespace Bannerlord.BUTR.Shared.Helpers
             if (string.IsNullOrWhiteSpace(type.Assembly.Location))
                 return null;
 
-            var fullAssemblyPath= Path.GetFullPath(type.Assembly.Location);
+            var fullAssemblyPath = Path.GetFullPath(type.Assembly.Location);
             foreach (var loadedModule in GetLoadedModules())
             {
                 var loadedModuleDirectory = Path.GetFullPath(Path.Combine(TaleWorlds.Engine.Utilities.GetBasePath(), "Modules", loadedModule.Id));
+                
+                if (!string.Equals(Path.GetPathRoot(fullAssemblyPath), Path.GetPathRoot(loadedModuleDirectory), StringComparison.Ordinal)) continue;
+                
                 var relativePath = new Uri(GetFullPathWithEndingSlashes(loadedModuleDirectory)).MakeRelativeUri(new Uri(fullAssemblyPath));
-                if (!relativePath.OriginalString.StartsWith("../"))
+                if (!relativePath.OriginalString.StartsWith("../", StringComparison.Ordinal))
                     return loadedModule;
             }
 
