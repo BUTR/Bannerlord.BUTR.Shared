@@ -52,6 +52,10 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
     using global::TaleWorlds.Localization;
 
+    /// <summary>
+    /// Helper for older version of the game, gives the ability to indirectly use TextObject
+    /// class.
+    /// </summary>
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif

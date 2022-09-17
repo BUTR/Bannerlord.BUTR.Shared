@@ -42,16 +42,13 @@
 
 namespace Bannerlord.BUTR.Shared.Helpers
 {
-    using ModuleInfo_ = global::Bannerlord.ModuleManager.ModuleInfoExtended;
-    using LoadType_ = global::Bannerlord.ModuleManager.LoadType;
-    using SubModuleInfo_ = global::Bannerlord.ModuleManager.SubModuleInfoExtended;
-    using SubModuleTags = global::Bannerlord.ModuleManager.SubModuleTags;
-
     using global::Bannerlord.BUTR.Shared.Extensions;
+    using global::Bannerlord.ModuleManager;
 
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
     using global::System;
+    using global::System.Collections.Concurrent;
     using global::System.Collections.Generic;
     using global::System.Linq;
     using global::System.IO;
@@ -73,104 +70,129 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         private static readonly GetModulesNamesDelegate? GetModulesNames;
 
-        private static readonly Type? _moduleHelperType = Type.GetType("TaleWorlds.ModuleManager.ModuleHelper, TaleWorlds.ModuleManager", false);
+        private static readonly Type? _moduleHelperType = ReflectionHelper.TypeByName("TaleWorlds.ModuleManager.ModuleHelper");
         private static readonly FieldInfo? _platformModuleExtensionField = _moduleHelperType?.GetField("_platformModuleExtension");
 
         private delegate object GetCurrentModuleDelegate();
-        private static readonly Type? _moduleType = Type.GetType("TaleWorlds.MountAndBlade.Module, TaleWorlds.MountAndBlade", false);
+        private static readonly Type? _moduleType = ReflectionHelper.TypeByName("TaleWorlds.MountAndBlade.Module");
         private static readonly GetCurrentModuleDelegate? GetCurrentModule;
 
         static ModuleInfoHelper()
         {
-            var engineUtilitiesType =
-                Type.GetType("TaleWorlds.Engine.Utilities, TaleWorlds.Engine", false);
-            GetModulesNames =
-                ReflectionHelper.GetDelegate<GetModulesNamesDelegate>(engineUtilitiesType?.GetMethod("GetModulesNames", BindingFlags.Public | BindingFlags.Static));
+            var publicStatic = BindingFlags.Public | BindingFlags.Static;
 
-            GetCurrentModule =
-                ReflectionHelper.GetDelegate<GetCurrentModuleDelegate>(_moduleType?.GetProperty("CurrentModule", BindingFlags.Public | BindingFlags.Static)?.GetMethod);
+            var engineUtilitiesType = ReflectionHelper.TypeByName("TaleWorlds.Engine.Utilities");
+            GetModulesNames = ReflectionHelper.GetDelegate<GetModulesNamesDelegate>(engineUtilitiesType?.GetMethod("GetModulesNames", publicStatic));
+
+            GetCurrentModule = ReflectionHelper.GetDelegate<GetCurrentModuleDelegate>(_moduleType?.GetProperty("CurrentModule", publicStatic)?.GetMethod);
         }
 
-        public static ModuleInfo_? LoadFromId(string id)
+        public static ModuleInfoExtended? LoadFromId(string id)
         {
-            var path = GetPath(id);
-            if (TryRead(path, out var xml))
-            {
-                var doc = new XmlDocument();
-                doc.LoadXml(xml);
-                return ModuleInfo_.FromXml(doc);
-            }
-            return null;
+            return GetModules().FirstOrDefault(x => x.Id == id);
         }
 
-        public static IEnumerable<ModuleInfo_> GetLoadedModules()
+        public static IEnumerable<ModuleInfoExtended> GetLoadedModules()
         {
             if (GetModulesNames == null) yield break;
 
-            foreach (string modulesName in GetModulesNames())
+            var allModulesAvailable = GetModules().ToDictionary(x => x.Id, x => x);
+            foreach (string modulesId in GetModulesNames())
             {
-                if (LoadFromId(modulesName) is { } moduleInfo)
+                if (allModulesAvailable.TryGetValue(modulesId, out var moduleInfo))
                     yield return moduleInfo;
             }
         }
 
-        public static IEnumerable<ModuleInfo_> GetModules()
+        private static List<ModuleInfoExtended> _cachedModules;
+        public static IEnumerable<ModuleInfoExtended> GetModules()
         {
-            var list = new List<ModuleInfo_>();
-            var physicalModules = GetPhysicalModules();
-            var platformModules = GetPlatformModules();
-            list.AddRange(physicalModules);
-            list.AddRange(platformModules);
-            var _allFoundModules = new Dictionary<string, ModuleInfo_>();
-            foreach (var moduleInfo in list)
+            if (_cachedModules is null)
             {
-                if (!_allFoundModules.ContainsKey(moduleInfo.Id.ToLower()))
+                _cachedModules = null;
+
+                var foundIds = new HashSet<string>();
+                foreach (var moduleInfo in GetPhysicalModules().Concat(GetPlatformModules()))
                 {
-                    _allFoundModules.Add(moduleInfo.Id.ToLower(), moduleInfo);
+                    if (!foundIds.Contains(moduleInfo.Id.ToLower()))
+                    {
+                        foundIds.Add(moduleInfo.Id.ToLower());
+                        _cachedModules.Add(moduleInfo);
+                    }
                 }
             }
-            return list;
+            return _cachedModules;
         }
 
-        public static ModuleInfo_? GetModuleByType(Type type)
+        private static ConcurrentDictionary<string, ModuleInfoExtended> _cachedAssemblyPaths;
+        public static ModuleInfoExtended? GetModuleByType(Type type)
         {
             if (string.IsNullOrWhiteSpace(type.Assembly.Location))
                 return null;
 
-            var fullAssemblyPath = Path.GetFullPath(type.Assembly.Location);
-            foreach (var loadedModule in GetLoadedModules())
+            var assemblyFile = new FileInfo(Path.GetFullPath(type.Assembly.Location));
+
+            if (_cachedAssemblyPaths.TryGetValue(assemblyFile.Directory.FullName, out var moduleInfo))
+                return moduleInfo;
+
+            if (!assemblyFile.Exists)
             {
-                var loadedModuleDirectory = Path.GetFullPath(Path.Combine(TaleWorlds.Engine.Utilities.GetBasePath(), "Modules", loadedModule.Id));
-                
-                if (!string.Equals(Path.GetPathRoot(fullAssemblyPath), Path.GetPathRoot(loadedModuleDirectory), StringComparison.Ordinal)) continue;
-                
-                var relativePath = new Uri(GetFullPathWithEndingSlashes(loadedModuleDirectory)).MakeRelativeUri(new Uri(fullAssemblyPath));
-                if (!relativePath.OriginalString.StartsWith("../", StringComparison.Ordinal))
-                    return loadedModule;
+                _cachedAssemblyPaths[assemblyFile.Directory.FullName] = null;
+                return null;
             }
 
-            return null;
+            static DirectoryInfo? GetMainDirectory(DirectoryInfo directoryInfo)
+            {
+                while (directoryInfo.Parent is not null && directoryInfo.Exists)
+                {
+                    if (directoryInfo.GetFiles("SubModule.xml").Length == 1)
+                        return directoryInfo;
+                    else
+                        directoryInfo = directoryInfo.Parent;
+                }
+                return null;
+            }
+
+            var mainDirectory = GetMainDirectory(assemblyFile.Directory);
+            if (mainDirectory is null)
+            {
+                _cachedAssemblyPaths[assemblyFile.Directory.FullName] = null;
+                return null;
+            }
+
+            var path = Path.Combine(mainDirectory.FullName, "SubModule.xml");
+            if (!TryRead(path, out var xml))
+            {
+                _cachedAssemblyPaths[assemblyFile.Directory.FullName] = null;
+                return null;
+            }
+
+            var xmlDocument = new XmlDocument();
+            xmlDocument.Load(path);
+            moduleInfo = ModuleInfoExtended.FromXml(xmlDocument);
+
+            _cachedAssemblyPaths[assemblyFile.Directory.FullName] = moduleInfo;
+            return moduleInfo;
         }
 
         private static string GetFullPathWithEndingSlashes(string input) =>
             $"{Path.GetFullPath(input).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)}{Path.DirectorySeparatorChar}";
 
-        private static IEnumerable<ModuleInfo_> GetPhysicalModules()
+        private static IEnumerable<ModuleInfoExtended> GetPhysicalModules()
         {
-            foreach (string text in GetModulePaths(PathPrefix(), 1).ToArray<string>())
+            foreach (string modulePath in Directory.GetDirectories(Path.Combine(TaleWorlds.Library.BasePath.Name, "Modules")))
             {
-                var directoryName = System.IO.Path.GetDirectoryName(text);
-                var path = GetPath(Path.Combine(directoryName, "SubModule.xml"));
+                var path = Path.Combine(modulePath, "SubModule.xml");
                 if (TryRead(path, out var xml))
                 {
                     var xmlDocument = new XmlDocument();
                     xmlDocument.Load(path);
-                    yield return ModuleInfo_.FromXml(xmlDocument);
+                    yield return ModuleInfoExtended.FromXml(xmlDocument);
                 }
             }
         }
 
-        private static IEnumerable<ModuleInfo_> GetPlatformModules()
+        private static IEnumerable<ModuleInfoExtended> GetPlatformModules()
         {
             if (_moduleHelperType == null) yield break;
             if (_platformModuleExtensionField == null) yield break;
@@ -190,30 +212,12 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 {
                     var doc = new XmlDocument();
                     doc.LoadXml(xml);
-                    yield return ModuleInfo_.FromXml(doc);
+                    yield return ModuleInfoExtended.FromXml(doc);
                 }
             }
         }
 
-        internal static IEnumerable<string> GetModulePaths(string directoryPath, int searchDepth)
-        {
-            if (searchDepth > 0)
-            {
-                foreach (string directories in Directory.GetDirectories(directoryPath))
-                {
-                    foreach (string path in GetModulePaths(directories, searchDepth - 1))
-                    {
-                        yield return path;
-                    }
-                }
-            }
-            foreach (string path in Directory.GetFiles(directoryPath, "SubModule.xml"))
-            {
-                yield return path;
-            }
-        }
-
-        public static bool CheckIfSubModuleCanBeLoaded(SubModuleInfo_ subModuleInfo)
+        public static bool CheckIfSubModuleCanBeLoaded(SubModuleInfoExtended subModuleInfo)
         {
             if (subModuleInfo.Tags.Count > 0)
             {
@@ -254,7 +258,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static bool ValidateLoadOrder(Type subModuleType, out string report) => ValidateLoadOrder(GetModuleByType(subModuleType), out report);
 
-        public static bool ValidateLoadOrder(ModuleInfo_ moduleInfo, out string report)
+        public static bool ValidateLoadOrder(ModuleInfoExtended moduleInfo, out string report)
         {
             const string SErrorModuleNotFound = @"{=FE6ya1gzZR}{REQUIRED_MODULE} module was not found!";
             const string SErrorIncompatibleModuleFound = @"{=EvI6KPAqTT}Incompatible module {DENIED_MODULE} was found!";
@@ -354,14 +358,14 @@ namespace Bannerlord.BUTR.Shared.Helpers
                     }
                     ValidateDependedModuleCompatibility(dependedModuleIndex, dependedModule.Id);
                 }
-                else if (dependedModule.LoadType == LoadType_.LoadBeforeThis)
+                else if (dependedModule.LoadType == LoadType.LoadBeforeThis)
                 {
                     if (moduleInfo.DependentModules.Any(dm => dm.Id == dependedModule.Id)) continue;
                     ValidateDependedModuleLoadBeforeThis(dependedModuleIndex, dependedModule.Id, dependedModule.IsOptional);
                 }
-                else if (dependedModule.LoadType == LoadType_.LoadAfterThis)
+                else if (dependedModule.LoadType == LoadType.LoadAfterThis)
                 {
-                    if (moduleInfo.DependentModules.Any(dm => dm.Id == dependedModule.Id) || (moduleInfo.DependentModuleMetadatas.Any(dm => dm.Id == dependedModule.Id && dm.LoadType == LoadType_.LoadBeforeThis)))
+                    if (moduleInfo.DependentModules.Any(dm => dm.Id == dependedModule.Id) || (moduleInfo.DependentModuleMetadatas.Any(dm => dm.Id == dependedModule.Id && dm.LoadType == LoadType.LoadBeforeThis)))
                     {
                         ReportMutuallyExclusiveDirectives(dependedModule.Id);
                         continue;
@@ -380,9 +384,6 @@ namespace Bannerlord.BUTR.Shared.Helpers
             return true;
         }
 
-
-        private static string PathPrefix() => Path.Combine(TaleWorlds.Library.BasePath.Name, "Modules");
-        private static string GetPath(string id) => Path.Combine(PathPrefix(), id, "SubModule.xml");
 
         private static bool TryRead(string path, out string? content)
         {

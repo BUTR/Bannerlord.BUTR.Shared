@@ -214,6 +214,56 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static TDelegate? GetDelegateObjectInstance<TDelegate>(MethodInfo? methodInfo) where TDelegate : Delegate
             => GetDelegate<TDelegate>(methodInfo);
+
+        /// <summary>Enumerates all assemblies in the current app domain, excluding visual studio assemblies</summary>
+        /// <returns>An enumeration of <see cref="Assembly"/></returns>
+        public static IEnumerable<Assembly> AllAssemblies() =>
+            AppDomain.CurrentDomain.GetAssemblies().Where(a => !a.FullName.StartsWith("Microsoft.VisualStudio"));
+
+        /// <summary>Gets all successfully loaded types from a given assembly</summary>
+        /// <param name="assembly">The assembly</param>
+        /// <returns>An array of types</returns>
+        /// <remarks>
+        /// This calls and returns <see cref="Assembly.GetTypes"/>, while catching any thrown <see cref="ReflectionTypeLoadException"/>.
+        /// If such an exception is thrown, returns the successfully loaded types (<see cref="ReflectionTypeLoadException.Types"/>,
+        /// filtered for non-null values).
+        /// </remarks>
+        public static Type[] GetTypesFromAssembly(Assembly assembly)
+        {
+            if (assembly is null)
+                return Type.EmptyTypes;
+
+            try
+            {
+                return assembly.GetTypes();
+            }
+            catch (ReflectionTypeLoadException ex)
+            {
+                Trace.TraceError($"AccessTools2.GetTypesFromAssembly: assembly {assembly} => {ex}");
+                return ex.Types.Where(type => type is object).ToArray();
+            }
+        }
+
+        /// <summary>Enumerates all successfully loaded types in the current app domain, excluding visual studio assemblies</summary>
+        /// <returns>An enumeration of all <see cref="Type"/> in all assemblies, excluding visual studio assemblies</returns>
+        public static IEnumerable<Type> AllTypes() => AllAssemblies().SelectMany(a => GetTypesFromAssembly(a));
+        public static Type? TypeByName(string name)
+        {
+            if (string.IsNullOrEmpty(name))
+            {
+                Trace.TraceError($"AccessTools2.TypeByName: 'name' is null or empty");
+                return null;
+            }
+
+            var type = Type.GetType(name, false);
+            if (type is null)
+                type = AllTypes().FirstOrDefault(t => t.FullName == name);
+            if (type is null)
+                type = AllTypes().FirstOrDefault(t => t.Name == name);
+            if (type is null)
+                Trace.TraceError($"AccessTools2.TypeByName: Could not find type named '{name}'");
+            return type;
+        }
     }
 }
 
