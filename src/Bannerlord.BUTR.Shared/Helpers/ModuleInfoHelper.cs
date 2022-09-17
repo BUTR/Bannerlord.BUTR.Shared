@@ -71,7 +71,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static readonly GetModulesNamesDelegate? GetModulesNames;
 
         private static readonly Type? _moduleHelperType = ReflectionHelper.TypeByName("TaleWorlds.ModuleManager.ModuleHelper");
-        private static readonly FieldInfo? _platformModuleExtensionField = _moduleHelperType?.GetField("_platformModuleExtension");
+        private static readonly FieldInfo? _platformModuleExtensionField;
 
         private delegate object GetCurrentModuleDelegate();
         private static readonly Type? _moduleType = ReflectionHelper.TypeByName("TaleWorlds.MountAndBlade.Module");
@@ -79,12 +79,14 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         static ModuleInfoHelper()
         {
+            var nonPublicInstance = BindingFlags.NonPublic | BindingFlags.Instance;
             var publicStatic = BindingFlags.Public | BindingFlags.Static;
 
             var engineUtilitiesType = ReflectionHelper.TypeByName("TaleWorlds.Engine.Utilities");
             GetModulesNames = ReflectionHelper.GetDelegate<GetModulesNamesDelegate>(engineUtilitiesType?.GetMethod("GetModulesNames", publicStatic));
 
             GetCurrentModule = ReflectionHelper.GetDelegate<GetCurrentModuleDelegate>(_moduleType?.GetProperty("CurrentModule", publicStatic)?.GetMethod);
+            _platformModuleExtensionField = _moduleHelperType?.GetField("_platformModuleExtension", nonPublicInstance);
         }
 
         public static ModuleInfoExtended? LoadFromId(string id)
@@ -119,7 +121,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
                     }
                 }
             }
-            
+
             return _cachedModules;
         }
 
