@@ -104,13 +104,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
         }
 
-        private static List<ModuleInfoExtended> _cachedModules;
+        private static ConcurrentBag<ModuleInfoExtended> _cachedModules = new();
         public static IEnumerable<ModuleInfoExtended> GetModules()
         {
-            if (_cachedModules is null)
+            if (_cachedModules.Count == 0)
             {
-                _cachedModules = null;
-
                 var foundIds = new HashSet<string>();
                 foreach (var moduleInfo in GetPhysicalModules().Concat(GetPlatformModules()))
                 {
@@ -121,10 +119,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
                     }
                 }
             }
+            
             return _cachedModules;
         }
 
-        private static ConcurrentDictionary<string, ModuleInfoExtended> _cachedAssemblyPaths;
+        private static ConcurrentDictionary<string, ModuleInfoExtended> _cachedAssemblyPaths = new();
         public static ModuleInfoExtended? GetModuleByType(Type type)
         {
             if (string.IsNullOrWhiteSpace(type.Assembly.Location))
