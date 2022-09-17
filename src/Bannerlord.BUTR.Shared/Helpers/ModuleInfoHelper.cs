@@ -79,14 +79,14 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         static ModuleInfoHelper()
         {
-            var nonPublicInstance = BindingFlags.NonPublic | BindingFlags.Instance;
+            var nonPublicStatic = BindingFlags.NonPublic | BindingFlags.Static;
             var publicStatic = BindingFlags.Public | BindingFlags.Static;
 
             var engineUtilitiesType = ReflectionHelper.TypeByName("TaleWorlds.Engine.Utilities");
             GetModulesNames = ReflectionHelper.GetDelegate<GetModulesNamesDelegate>(engineUtilitiesType?.GetMethod("GetModulesNames", publicStatic));
 
             GetCurrentModule = ReflectionHelper.GetDelegate<GetCurrentModuleDelegate>(_moduleType?.GetProperty("CurrentModule", publicStatic)?.GetMethod);
-            _platformModuleExtensionField = _moduleHelperType?.GetField("_platformModuleExtension", nonPublicInstance);
+            _platformModuleExtensionField = _moduleHelperType?.GetField("_platformModuleExtension", nonPublicStatic);
         }
 
         public static ModuleInfoExtended? LoadFromId(string id)
