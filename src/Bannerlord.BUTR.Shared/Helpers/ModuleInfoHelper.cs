@@ -207,8 +207,9 @@ namespace Bannerlord.BUTR.Shared.Helpers
             var modulePaths = getModulePathsInvoker.Invoke(platformModuleExtension, Array.Empty<object>()) as string[];
             if (modulePaths == null) yield break;
 
-            foreach (string path in modulePaths)
+            foreach (string modulePath in modulePaths)
             {
+                var path = Path.Combine(modulePath, "SubModule.xml");
                 if (TryRead(path, out var xml))
                 {
                     var doc = new XmlDocument();
