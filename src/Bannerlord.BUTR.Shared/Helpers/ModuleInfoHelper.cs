@@ -98,8 +98,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
         {
             if (GetModulesNames == null) yield break;
 
+            var moduleNames = GetModulesNames();
+            if (moduleNames.Length == 0) yield break;
+
             var allModulesAvailable = GetModules().ToDictionary(x => x.Id, x => x);
-            foreach (string modulesId in GetModulesNames())
+            foreach (string modulesId in moduleNames)
             {
                 if (allModulesAvailable.TryGetValue(modulesId, out var moduleInfo))
                     yield return moduleInfo;
@@ -181,6 +184,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         private static IEnumerable<ModuleInfoExtended> GetPhysicalModules()
         {
+            if (string.IsNullOrEmpty(TaleWorlds.Library.BasePath.Name)) yield break;
+
             foreach (string modulePath in Directory.GetDirectories(Path.Combine(TaleWorlds.Library.BasePath.Name, "Modules")))
             {
                 var path = Path.Combine(modulePath, "SubModule.xml");
