@@ -129,8 +129,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
         }
 
         private static ConcurrentDictionary<string, ModuleInfoExtended> _cachedAssemblyPaths = new();
-        public static ModuleInfoExtended? GetModuleByType(Type type)
+        public static ModuleInfoExtended? GetModuleByType(Type? type)
         {
+            if (type is null)
+                return null;
+
             if (string.IsNullOrWhiteSpace(type.Assembly.Location))
                 return null;
 
@@ -263,15 +266,24 @@ namespace Bannerlord.BUTR.Shared.Helpers
             _ => true
         };
 
-        public static bool ValidateLoadOrder(Type subModuleType, out string report) => ValidateLoadOrder(GetModuleByType(subModuleType), out report);
+        public static bool ValidateLoadOrder(Type subModuleType, out string report)
+        {
+            return ValidateLoadOrder(GetModuleByType(subModuleType), out report);
+        }
 
-        public static bool ValidateLoadOrder(ModuleInfoExtended moduleInfo, out string report)
+        public static bool ValidateLoadOrder(ModuleInfoExtended? moduleInfo, out string report)
         {
             const string SErrorModuleNotFound = @"{=FE6ya1gzZR}{REQUIRED_MODULE} module was not found!";
             const string SErrorIncompatibleModuleFound = @"{=EvI6KPAqTT}Incompatible module {DENIED_MODULE} was found!";
             const string SErrorWrongModuleOrderTooEarly = @"{=5G9zffrgMh}{MODULE} is loaded before the {REQUIRED_MODULE}!{NL}Make sure {MODULE} is loaded after it!";
             const string SErrorWrongModuleOrderTooLate = @"{=UZ8zfvudMs}{MODULE} is loaded after the {REQUIRED_MODULE}!{NL}Make sure {MODULE} is loaded before it!";
             const string SErrorMutuallyExclusiveDirectives = @"{=FcR4BXnhx8}{MODULE} has mutually exclusive mod order directives specified for the {REQUIRED_MODULE}!";
+
+            if (moduleInfo is null)
+            {
+                report = "CRITICAL ERROR";
+                return false;
+            }
 
             var loadedModules = ModuleInfoHelper.GetLoadedModules().ToList();
             var moduleIndex = loadedModules.IndexOf(moduleInfo);
