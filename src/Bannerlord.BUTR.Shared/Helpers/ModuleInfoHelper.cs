@@ -66,6 +66,9 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #endif
     internal static class ModuleInfoHelper
     {
+        public const string ModulesFolder = "Modules";
+        public const string SubModuleFile = "SubModule.xml";
+
         private delegate string[] GetModulesNamesDelegate();
 
         private static readonly GetModulesNamesDelegate? GetModulesNames;
@@ -89,10 +92,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             _platformModuleExtensionField = _moduleHelperType?.GetField("_platformModuleExtension", nonPublicStatic);
         }
 
-        public static ModuleInfoExtended? LoadFromId(string id)
-        {
-            return GetModules().FirstOrDefault(x => x.Id == id);
-        }
+        public static ModuleInfoExtended? LoadFromId(string id) => GetModules().FirstOrDefault(x => x.Id == id);
 
         public static IEnumerable<ModuleInfoExtended> GetLoadedModules()
         {
@@ -110,6 +110,10 @@ namespace Bannerlord.BUTR.Shared.Helpers
         }
 
         private static ConcurrentBag<ModuleInfoExtended> _cachedModules = new();
+
+        /// <summary>
+        /// Provides unordered modules
+        /// </summary>
         public static IEnumerable<ModuleInfoExtended> GetModules()
         {
             if (_cachedModules.Count == 0)
@@ -128,8 +132,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
             return _cachedModules;
         }
 
-        private static ConcurrentDictionary<string, ModuleInfoExtended> _cachedAssemblyPaths = new();
-        public static ModuleInfoExtended? GetModuleByType(Type? type)
+        private static ConcurrentDictionary<string, string> _cachedAssemblyLocationToModulePath = new();
+        public static string? GetModulePath(Type? type)
         {
             if (type is null)
                 return null;
@@ -137,49 +141,44 @@ namespace Bannerlord.BUTR.Shared.Helpers
             if (string.IsNullOrWhiteSpace(type.Assembly.Location))
                 return null;
 
+            if (_cachedAssemblyLocationToModulePath.TryGetValue(type.Assembly.Location, out var modulePath))
+                return modulePath;
+
             var assemblyFile = new FileInfo(Path.GetFullPath(type.Assembly.Location));
 
-            if (_cachedAssemblyPaths.TryGetValue(assemblyFile.Directory.FullName, out var moduleInfo))
-                return moduleInfo;
-
-            if (!assemblyFile.Exists)
+            static DirectoryInfo? GetMainDirectory(DirectoryInfo? directoryInfo)
             {
-                _cachedAssemblyPaths[assemblyFile.Directory.FullName] = null;
-                return null;
-            }
-
-            static DirectoryInfo? GetMainDirectory(DirectoryInfo directoryInfo)
-            {
-                while (directoryInfo.Parent is not null && directoryInfo.Exists)
+                while (directoryInfo?.Parent is not null && directoryInfo.Exists)
                 {
-                    if (directoryInfo.GetFiles("SubModule.xml").Length == 1)
+                    if (directoryInfo.GetFiles(SubModuleFile).Length == 1)
                         return directoryInfo;
-                    else
-                        directoryInfo = directoryInfo.Parent;
+
+                    directoryInfo = directoryInfo.Parent;
                 }
                 return null;
             }
 
-            var mainDirectory = GetMainDirectory(assemblyFile.Directory);
-            if (mainDirectory is null)
-            {
-                _cachedAssemblyPaths[assemblyFile.Directory.FullName] = null;
+            return modulePath = GetMainDirectory(assemblyFile.Directory)?.FullName;
+        }
+
+        private static ConcurrentDictionary<string, ModuleInfoExtended> _cachedModulePathToSubModuleFile = new();
+        public static ModuleInfoExtended? GetModuleByType(Type? type)
+        {
+            if (type is null)
                 return null;
-            }
 
-            var path = Path.Combine(mainDirectory.FullName, "SubModule.xml");
-            if (!TryRead(path, out var xml))
-            {
-                _cachedAssemblyPaths[assemblyFile.Directory.FullName] = null;
+            var modulePath = GetModulePath(type);
+
+            if (modulePath is null)
                 return null;
-            }
 
-            var xmlDocument = new XmlDocument();
-            xmlDocument.Load(path);
-            moduleInfo = ModuleInfoExtended.FromXml(xmlDocument);
+            if (_cachedModulePathToSubModuleFile.TryGetValue(modulePath, out var moduleInfo))
+                return moduleInfo;
 
-            _cachedAssemblyPaths[assemblyFile.Directory.FullName] = moduleInfo;
-            return moduleInfo;
+            if (!TryReadXml(Path.Combine(modulePath, SubModuleFile), out var xml))
+                return _cachedModulePathToSubModuleFile[modulePath] = null;
+
+            return _cachedModulePathToSubModuleFile[modulePath] = ModuleInfoExtended.FromXml(xml);
         }
 
         private static string GetFullPathWithEndingSlashes(string input) =>
@@ -189,15 +188,10 @@ namespace Bannerlord.BUTR.Shared.Helpers
         {
             if (string.IsNullOrEmpty(TaleWorlds.Library.BasePath.Name)) yield break;
 
-            foreach (string modulePath in Directory.GetDirectories(Path.Combine(TaleWorlds.Library.BasePath.Name, "Modules")))
+            foreach (string modulePath in Directory.GetDirectories(Path.Combine(TaleWorlds.Library.BasePath.Name, ModulesFolder)))
             {
-                var path = Path.Combine(modulePath, "SubModule.xml");
-                if (TryRead(path, out var xml))
-                {
-                    var xmlDocument = new XmlDocument();
-                    xmlDocument.Load(path);
-                    yield return ModuleInfoExtended.FromXml(xmlDocument);
-                }
+                if (TryReadXml(Path.Combine(modulePath, SubModuleFile), out var xml))
+                    yield return ModuleInfoExtended.FromXml(xml);
             }
         }
 
@@ -217,13 +211,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
             foreach (string modulePath in modulePaths)
             {
-                var path = Path.Combine(modulePath, "SubModule.xml");
-                if (TryRead(path, out var xml))
-                {
-                    var doc = new XmlDocument();
-                    doc.LoadXml(xml);
-                    yield return ModuleInfoExtended.FromXml(doc);
-                }
+                if (TryReadXml(Path.Combine(modulePath, SubModuleFile), out var xml))
+                    yield return ModuleInfoExtended.FromXml(xml);
             }
         }
 
@@ -404,19 +393,19 @@ namespace Bannerlord.BUTR.Shared.Helpers
         }
 
 
-        private static bool TryRead(string path, out string? content)
+        private static bool TryReadXml(string path, out XmlDocument xml)
         {
             try
             {
-                using var xml = new StreamReader(path);
-                content = xml.ReadToEnd();
+                var xmlDocument = new XmlDocument();
+                xmlDocument.LoadXml(File.ReadAllText(path));
+                xml = xmlDocument;
                 return true;
             }
             catch (Exception ex)
             {
-                content = null;
+                xml = null;
                 return false;
-
             }
         }
     }
