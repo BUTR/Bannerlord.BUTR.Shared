@@ -216,40 +216,39 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
         }
 
-        public static bool CheckIfSubModuleCanBeLoaded(SubModuleInfoExtended subModuleInfo)
-        {
-            if (subModuleInfo.Tags.Count > 0)
-            {
-                foreach (var (key, values) in subModuleInfo.Tags)
-                {
-                    if (!Enum.TryParse<SubModuleTags>(key, out var tag))
-                        continue;
+        public static bool CheckIfSubModuleCanBeLoaded(SubModuleInfoExtended subModuleInfo) => CheckIfSubModuleCanBeLoaded(subModuleInfo,
+            ApplicationPlatform.CurrentPlatform, ApplicationPlatform.CurrentRuntimeLibrary, Module.CurrentModule.StartupInfo.DedicatedServerType);
 
-                    foreach (var value in values)
-                    {
-                        if (!GetSubModuleTagValiditiy(tag, value))
-                        {
-                            return false;
-                        }
-                    }
-                }
-                return true;
+        public static bool CheckIfSubModuleCanBeLoaded(SubModuleInfoExtended subModuleInfo, Platform cPlatform, Runtime cRuntime, DedicatedServerType cServerType)
+        {
+            if (subModuleInfo.Tags.Count <= 0) return true;
+
+            foreach (var (key, values) in subModuleInfo.Tags)
+            {
+                if (!Enum.TryParse<SubModuleTags>(key, out var tag))
+                    continue;
+
+                if (values.Any(value => !GetSubModuleTagValiditiy(tag, value, cPlatform, cRuntime, cServerType)))
+                    return false;
             }
             return true;
         }
 
-        public static bool GetSubModuleTagValiditiy(SubModuleTags tag, string value) => tag switch
+        public static bool GetSubModuleTagValiditiy(SubModuleTags tag, string value) => GetSubModuleTagValiditiy(tag, value,
+            ApplicationPlatform.CurrentPlatform, ApplicationPlatform.CurrentRuntimeLibrary, Module.CurrentModule.StartupInfo.DedicatedServerType);
+
+        public static bool GetSubModuleTagValiditiy(SubModuleTags tag, string value, Platform cPlatform, Runtime cRuntime, DedicatedServerType cServerType) => tag switch
         {
-            SubModuleTags.RejectedPlatform => !Enum.TryParse<Platform>(value, out var platform) || ApplicationPlatform.CurrentPlatform != platform,
-            SubModuleTags.ExclusivePlatform => !Enum.TryParse<Platform>(value, out var platform) || ApplicationPlatform.CurrentPlatform == platform,
-            SubModuleTags.DependantRuntimeLibrary => !Enum.TryParse<Runtime>(value, out var runtime) || ApplicationPlatform.CurrentRuntimeLibrary == runtime,
+            SubModuleTags.RejectedPlatform => !Enum.TryParse<Platform>(value, out var platform) || cPlatform != platform,
+            SubModuleTags.ExclusivePlatform => !Enum.TryParse<Platform>(value, out var platform) || cPlatform == platform,
+            SubModuleTags.DependantRuntimeLibrary => !Enum.TryParse<Runtime>(value, out var runtime) || cRuntime == runtime,
             SubModuleTags.IsNoRenderModeElement => value.Equals("false"),
             SubModuleTags.DedicatedServerType => value.ToLower() switch
             {
-                "none" => Module.CurrentModule.StartupInfo.DedicatedServerType == DedicatedServerType.None,
-                "both" => Module.CurrentModule.StartupInfo.DedicatedServerType == DedicatedServerType.None,
-                "custom" => Module.CurrentModule.StartupInfo.DedicatedServerType == DedicatedServerType.Custom,
-                "matchmaker" => Module.CurrentModule.StartupInfo.DedicatedServerType == DedicatedServerType.Matchmaker,
+                "none" => cServerType == DedicatedServerType.None,
+                "both" => cServerType == DedicatedServerType.None,
+                "custom" => cServerType == DedicatedServerType.Custom,
+                "matchmaker" => cServerType == DedicatedServerType.Matchmaker,
                 _ => false
             },
             _ => true
