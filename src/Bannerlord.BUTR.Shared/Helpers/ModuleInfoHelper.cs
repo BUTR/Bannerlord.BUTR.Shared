@@ -179,7 +179,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             foreach (var modulePath in Directory.GetDirectories(Path.Combine(TaleWorlds.Library.BasePath.Name, ModulesFolder)))
             {
                 if (TryReadXml(Path.Combine(modulePath, SubModuleFile), out var xml))
-                    yield return new ModuleInfoExtendedWithPath(ModuleInfoExtended.FromXml(xml), modulePath);
+                    yield return new ModuleInfoExtendedWithPath(ModuleInfoExtended.FromXml(xml), Path.GetFullPath(modulePath));
             }
         }
 
@@ -200,7 +200,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             foreach (string modulePath in modulePaths)
             {
                 if (TryReadXml(Path.Combine(modulePath, SubModuleFile), out var xml))
-                    yield return new ModuleInfoExtendedWithPath(ModuleInfoExtended.FromXml(xml), modulePath);
+                    yield return new ModuleInfoExtendedWithPath(ModuleInfoExtended.FromXml(xml), Path.GetFullPath(modulePath));
             }
         }
 
