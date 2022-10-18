@@ -55,7 +55,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-    internal class InformationMessageHelper
+    internal class InformationManagerHelper
     {
         private record InformationMessageWrapper(object Object)
         {
