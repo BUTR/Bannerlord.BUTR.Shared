@@ -58,6 +58,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.Linq;
     using global::System.IO;
     using global::System.Text;
+    using global::System.Threading;
     using global::System.Xml;
 
     using global::TaleWorlds.Library;
@@ -107,27 +108,27 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
         }
 
-        private static ConcurrentBag<ModuleInfoExtendedWithPath> _cachedModules = new();
+        private static Lazy<List<ModuleInfoExtendedWithPath>> _cachedModules = new(() =>
+        {
+            var list = new List<ModuleInfoExtendedWithPath>();
+            var foundIds = new HashSet<string>();
+            foreach (var moduleInfo in GetPhysicalModules().Concat(GetPlatformModules()))
+            {
+                if (!foundIds.Contains(moduleInfo.Id.ToLower()))
+                {
+                    foundIds.Add(moduleInfo.Id.ToLower());
+                    list.Add(moduleInfo);
+                }
+            }
+            return list;
+        }, LazyThreadSafetyMode.ExecutionAndPublication);
 
         /// <summary>
         /// Provides unordered modules
         /// </summary>
         public static IEnumerable<ModuleInfoExtended> GetModules()
         {
-            if (_cachedModules.Count == 0)
-            {
-                var foundIds = new HashSet<string>();
-                foreach (var moduleInfo in GetPhysicalModules().Concat(GetPlatformModules()))
-                {
-                    if (!foundIds.Contains(moduleInfo.Id.ToLower()))
-                    {
-                        foundIds.Add(moduleInfo.Id.ToLower());
-                        _cachedModules.Add(moduleInfo);
-                    }
-                }
-            }
-
-            return _cachedModules;
+            return _cachedModules.Value;
         }
 
         private static ConcurrentDictionary<string, string> _cachedAssemblyLocationToModulePath = new();
@@ -159,12 +160,12 @@ namespace Bannerlord.BUTR.Shared.Helpers
             return modulePath = GetMainDirectory(assemblyFile.Directory)?.FullName;
         }
 
-        public static string? GetModulePath(ModuleInfoExtended module) => _cachedModules.FirstOrDefault(x => x.Id == module.Id)?.Path;
+        public static string? GetModulePath(ModuleInfoExtended module) => _cachedModules.Value.FirstOrDefault(x => x.Id == module.Id)?.Path;
 
         public static ModuleInfoExtended? GetModuleByType(Type? type)
         {
             var modulePath = GetModulePath(type);
-            return _cachedModules.FirstOrDefault(x => x.Path == modulePath);
+            return _cachedModules.Value.FirstOrDefault(x => x.Path == modulePath);
         }
 
         private static string GetFullPathWithEndingSlashes(string input) =>
