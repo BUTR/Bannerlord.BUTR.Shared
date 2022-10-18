@@ -38,7 +38,9 @@
 
 #if !BANNERLORDBUTRSHARED_DISABLE
 #nullable enable
+#if !BANNERLORDBUTRSHARED_ENABLE_WARNINGS
 #pragma warning disable
+#endif
 
 namespace Bannerlord.BUTR.Shared.Helpers
 {
@@ -48,12 +50,13 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::Bannerlord.ButterLib.Common.Extensions;
 #endif
 
+    using global::HarmonyLib.BUTR.Extensions;
+
     using global::System;
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
     using global::System.Reflection;
     using global::System.Linq;
-
 
     using global::TaleWorlds.Library;
     using global::TaleWorlds.Engine;
@@ -74,7 +77,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             static PlatformDirectoryPathHandle()
             {
                 var platformFileHelperPCType = typeof(ApplicationVersion).Assembly.GetType("TaleWorlds.Library.PlatformDirectoryPath");
-                PlatformDirectoryPathCtor = ReflectionHelper.GetDelegate<PlatformDirectoryPathCtorDelegate>(platformFileHelperPCType.GetConstructors().First());
+                PlatformDirectoryPathCtor = AccessTools2.GetDelegate<PlatformDirectoryPathCtorDelegate>(platformFileHelperPCType.GetConstructors().First());
             }
 
             public static PlatformDirectoryPathHandle? Create(int type, string path) =>
@@ -104,11 +107,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
             static PlatformFileHelperPCHandle()
             {
                 var platformFileHelperPCType = typeof(ApplicationVersion).Assembly.GetType("TaleWorlds.Library.PlatformFileHelperPC");
-                PlatformFileHelperPCCtor = ReflectionHelper.GetDelegate<PlatformFileHelperPCCtorDelegate>(platformFileHelperPCType.GetConstructors().First());
-                GetDirectoryFullPathMethod = ReflectionHelper.GetDelegate<GetDirectoryFullPathDelegate>(platformFileHelperPCType.GetMethod("GetDirectoryFullPath", BindingFlags.Instance | BindingFlags.NonPublic));
+                PlatformFileHelperPCCtor = AccessTools2.GetDelegate<PlatformFileHelperPCCtorDelegate>(platformFileHelperPCType.GetConstructors().First());
+                GetDirectoryFullPathMethod = AccessTools2.GetDelegate<GetDirectoryFullPathDelegate>(platformFileHelperPCType.GetMethod("GetDirectoryFullPath", BindingFlags.Instance | BindingFlags.NonPublic));
                 var commonType = typeof(ApplicationVersion).Assembly.GetType("TaleWorlds.Library.Common");
                 var property = commonType.GetProperty("PlatformFileHelper");
-                GetPlatformFileHelperMethod = ReflectionHelper.GetDelegate<GetPlatformFileHelperDelegate>(property.GetGetMethod(true));
+                GetPlatformFileHelperMethod = AccessTools2.GetDelegate<GetPlatformFileHelperDelegate>(property.GetGetMethod(true));
             }
 
             public static PlatformFileHelperPCHandle? Create(string applicationName) =>
@@ -146,7 +149,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
         static FSIOHelper()
         {
             var utilitiesType = typeof(BoundingBox).Assembly.GetType("TaleWorlds.Engine.Utilities");
-            GetConfigsPathMethod = ReflectionHelper.GetDelegate<GetConfigsPathDelegate>(utilitiesType.GetMethod("GetConfigsPath"));
+            GetConfigsPathMethod = AccessTools2.GetDelegate<GetConfigsPathDelegate>(utilitiesType.GetMethod("GetConfigsPath"));
         }
 
 
@@ -186,6 +189,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
     }
 }
 
+#if !BANNERLORDBUTRSHARED_ENABLE_WARNINGS
 #pragma warning restore
+#endif
 #nullable restore
 #endif // BANNERLORDBUTRSHARED_DISABLE

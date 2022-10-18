@@ -38,7 +38,9 @@
 
 #if !BANNERLORDBUTRSHARED_DISABLE
 #nullable enable
+#if !BANNERLORDBUTRSHARED_ENABLE_WARNINGS
 #pragma warning disable
+#endif
 
 namespace Bannerlord.BUTR.Shared.Helpers
 {
@@ -75,6 +77,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
     }
 }
 
+#if !BANNERLORDBUTRSHARED_ENABLE_WARNINGS
 #pragma warning restore
+#endif
 #nullable restore
 #endif // BANNERLORDBUTRSHARED_DISABLE

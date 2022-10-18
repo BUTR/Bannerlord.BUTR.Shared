@@ -38,12 +38,17 @@
 
 #if !BANNERLORDBUTRSHARED_DISABLE
 #nullable enable
+#if !BANNERLORDBUTRSHARED_ENABLE_WARNINGS
 #pragma warning disable
+#endif
 
 namespace Bannerlord.BUTR.Shared.Helpers
 {
     using global::Bannerlord.BUTR.Shared.Extensions;
     using global::Bannerlord.ModuleManager;
+
+    using global::HarmonyLib;
+    using global::HarmonyLib.BUTR.Extensions;
 
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
@@ -53,7 +58,6 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.Linq;
     using global::System.IO;
     using global::System.Text;
-    using global::System.Reflection;
     using global::System.Xml;
 
     using global::TaleWorlds.Library;
@@ -73,23 +77,17 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         private static readonly GetModulesNamesDelegate? GetModulesNames;
 
-        private static readonly Type? _moduleHelperType = ReflectionHelper.TypeByName("TaleWorlds.ModuleManager.ModuleHelper");
-        private static readonly FieldInfo? _platformModuleExtensionField;
+        private static readonly AccessTools.FieldRef<object>? _platformModuleExtensionField;
 
         private delegate object GetCurrentModuleDelegate();
-        private static readonly Type? _moduleType = ReflectionHelper.TypeByName("TaleWorlds.MountAndBlade.Module");
         private static readonly GetCurrentModuleDelegate? GetCurrentModule;
 
         static ModuleInfoHelper()
         {
-            var nonPublicStatic = BindingFlags.NonPublic | BindingFlags.Static;
-            var publicStatic = BindingFlags.Public | BindingFlags.Static;
+            GetModulesNames = AccessTools2.GetDelegate<GetModulesNamesDelegate>("TaleWorlds.Engine.Utilities:GetModulesNames");
 
-            var engineUtilitiesType = ReflectionHelper.TypeByName("TaleWorlds.Engine.Utilities");
-            GetModulesNames = ReflectionHelper.GetDelegate<GetModulesNamesDelegate>(engineUtilitiesType?.GetMethod("GetModulesNames", publicStatic));
-
-            GetCurrentModule = ReflectionHelper.GetDelegate<GetCurrentModuleDelegate>(_moduleType?.GetProperty("CurrentModule", publicStatic)?.GetMethod);
-            _platformModuleExtensionField = _moduleHelperType?.GetField("_platformModuleExtension", nonPublicStatic);
+            GetCurrentModule = AccessTools2.GetPropertyGetterDelegate<GetCurrentModuleDelegate>("TaleWorlds.MountAndBlade.Module:CurrentModule");
+            _platformModuleExtensionField = AccessTools2.StaticFieldRefAccess<object>("TaleWorlds.ModuleManager.ModuleHelper:_platformModuleExtension");
         }
 
         public static ModuleInfoExtended? LoadFromId(string id) => GetModules().FirstOrDefault(x => x.Id == id);
@@ -178,20 +176,19 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
             foreach (var modulePath in Directory.GetDirectories(Path.Combine(TaleWorlds.Library.BasePath.Name, ModulesFolder)))
             {
-                if (TryReadXml(Path.Combine(modulePath, SubModuleFile), out var xml))
-                    yield return new ModuleInfoExtendedWithPath(ModuleInfoExtended.FromXml(xml), Path.GetFullPath(modulePath));
+                if (TryReadXml(Path.Combine(modulePath, SubModuleFile), out var xml)&& ModuleInfoExtended.FromXml(xml) is { } moduleInfo)
+                    yield return new ModuleInfoExtendedWithPath(moduleInfo, Path.GetFullPath(modulePath));
             }
         }
 
         private static IEnumerable<ModuleInfoExtendedWithPath> GetPlatformModules()
         {
-            if (_moduleHelperType == null) yield break;
             if (_platformModuleExtensionField == null) yield break;
 
-            var platformModuleExtension = _platformModuleExtensionField.GetValue(null);
+            var platformModuleExtension = _platformModuleExtensionField();
             if (platformModuleExtension == null) yield break;
 
-            var getModulePathsInvoker = platformModuleExtension.GetType().GetMethod("GetModulePaths", BindingFlags.Public | BindingFlags.Instance);
+            var getModulePathsInvoker = AccessTools2.Method(platformModuleExtension.GetType(), "GetModulePaths");
             if (getModulePathsInvoker == null) yield break;
 
             var modulePaths = getModulePathsInvoker.Invoke(platformModuleExtension, Array.Empty<object>()) as string[];
@@ -199,8 +196,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
             foreach (string modulePath in modulePaths)
             {
-                if (TryReadXml(Path.Combine(modulePath, SubModuleFile), out var xml))
-                    yield return new ModuleInfoExtendedWithPath(ModuleInfoExtended.FromXml(xml), Path.GetFullPath(modulePath));
+                if (TryReadXml(Path.Combine(modulePath, SubModuleFile), out var xml) && ModuleInfoExtended.FromXml(xml) is { } moduleInfo)
+                    yield return new ModuleInfoExtendedWithPath(moduleInfo, Path.GetFullPath(modulePath));
             }
         }
 
@@ -375,12 +372,12 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 return false;
             }
 
-            report = null;
+            report = string.Empty;
             return true;
         }
 
 
-        private static bool TryReadXml(string path, out XmlDocument xml)
+        private static bool TryReadXml(string path, out XmlDocument? xml)
         {
             try
             {
@@ -389,7 +386,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 xml = xmlDocument;
                 return true;
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 xml = null;
                 return false;
@@ -398,6 +395,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
     }
 }
 
+#if !BANNERLORDBUTRSHARED_ENABLE_WARNINGS
 #pragma warning restore
+#endif
 #nullable restore
 #endif // BANNERLORDBUTRSHARED_DISABLE

@@ -38,11 +38,16 @@
 
 #if !BANNERLORDBUTRSHARED_DISABLE
 #nullable enable
+#if !BANNERLORDBUTRSHARED_ENABLE_WARNINGS
 #pragma warning disable
+#endif
 
 namespace Bannerlord.BUTR.Shared.Helpers
 {
     using global::Bannerlord.BUTR.Shared.Extensions;
+
+    using global::HarmonyLib;
+    using global::HarmonyLib.BUTR.Extensions;
 
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
@@ -73,9 +78,9 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private delegate void SetTextVariableTextObjectSingleDelegate(TextObject instance, string tag, float variable);
         private delegate TextObject SetTextVariable2TextObjectSingleDelegate(TextObject instance, string tag, float variable);
 
-        private delegate TextObject SetTextVariableFromObjectDelegate(TextObject instance, string tag, object variable);
+        private delegate TextObject SetTextVariableFromObjectDelegate(TextObject instance, string tag, object? variable);
 
-        private static readonly FieldInfo ValueField;
+        private static readonly AccessTools.FieldRef<TextObject, string>? Value;
         private static readonly SetTextVariableTextObjectDelegate? SetTextVariableTextObject;
         private static readonly SetTextVariable2TextObjectDelegate? SetTextVariable2TextObject;
         private static readonly SetTextVariableTextObjectStringDelegate? SetTextVariableTextObjectString;
@@ -88,34 +93,31 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         static TextObjectHelper()
         {
-            if (typeof(TextObject).GetField("Value", BindingFlags.NonPublic | BindingFlags.Public | BindingFlags.Instance) is { } value)
-            {
-                ValueField = value;
-            }
+            Value = AccessTools2.FieldRefAccess<TextObject, string>("Value");
 
-            if (typeof(TextObject).GetMethod("SetTextVariable", new[] {typeof(string), typeof(TextObject)}) is { } setTextVariableTO)
+            if (AccessTools2.Method(typeof(TextObject), "SetTextVariable", new[] { typeof(string), typeof(TextObject) }) is { } setTextVariableTO)
             {
-                SetTextVariableTextObject = ReflectionHelper.GetDelegate<SetTextVariableTextObjectDelegate>(setTextVariableTO);
-                SetTextVariable2TextObject = ReflectionHelper.GetDelegate<SetTextVariable2TextObjectDelegate>(setTextVariableTO);
+                SetTextVariableTextObject = AccessTools2.GetDelegate<SetTextVariableTextObjectDelegate>(setTextVariableTO);
+                SetTextVariable2TextObject = AccessTools2.GetDelegate<SetTextVariable2TextObjectDelegate>(setTextVariableTO);
             }
-            if (typeof(TextObject).GetMethod("SetTextVariable", new[] {typeof(string), typeof(string)}) is { } setTextVariableStr)
+            if (AccessTools2.Method(typeof(TextObject), "SetTextVariable", new[] { typeof(string), typeof(string) }) is { } setTextVariableStr)
             {
-                SetTextVariableTextObjectString = ReflectionHelper.GetDelegate<SetTextVariableTextObjectStringDelegate>(setTextVariableStr);
-                SetTextVariable2TextObjectString = ReflectionHelper.GetDelegate<SetTextVariable2TextObjectStringDelegate>(setTextVariableStr);
+                SetTextVariableTextObjectString = AccessTools2.GetDelegate<SetTextVariableTextObjectStringDelegate>(setTextVariableStr);
+                SetTextVariable2TextObjectString = AccessTools2.GetDelegate<SetTextVariable2TextObjectStringDelegate>(setTextVariableStr);
             }
-            if (typeof(TextObject).GetMethod("SetTextVariable", new[] {typeof(string), typeof(int)}) is { } setTextVariableInt)
+            if (AccessTools2.Method(typeof(TextObject), "SetTextVariable", new[] { typeof(string), typeof(int) }) is { } setTextVariableInt)
             {
-                SetTextVariableTextObjectInt32 = ReflectionHelper.GetDelegate<SetTextVariableTextObjectInt32Delegate>(setTextVariableInt);
-                SetTextVariable2TextObjectInt32 = ReflectionHelper.GetDelegate<SetTextVariable2TextObjectInt32Delegate>(setTextVariableInt);
+                SetTextVariableTextObjectInt32 = AccessTools2.GetDelegate<SetTextVariableTextObjectInt32Delegate>(setTextVariableInt);
+                SetTextVariable2TextObjectInt32 = AccessTools2.GetDelegate<SetTextVariable2TextObjectInt32Delegate>(setTextVariableInt);
             }
-            if (typeof(TextObject).GetMethod("SetTextVariable", new[] {typeof(string), typeof(float)}) is { } setTextVariableFloat)
+            if (AccessTools2.Method(typeof(TextObject), "SetTextVariable", new[] { typeof(string), typeof(float) }) is { } setTextVariableFloat)
             {
-                SetTextVariableTextObjectSingle = ReflectionHelper.GetDelegate<SetTextVariableTextObjectSingleDelegate>(setTextVariableFloat);
-                SetTextVariable2TextObjectSingle = ReflectionHelper.GetDelegate<SetTextVariable2TextObjectSingleDelegate>(setTextVariableFloat);
+                SetTextVariableTextObjectSingle = AccessTools2.GetDelegate<SetTextVariableTextObjectSingleDelegate>(setTextVariableFloat);
+                SetTextVariable2TextObjectSingle = AccessTools2.GetDelegate<SetTextVariable2TextObjectSingleDelegate>(setTextVariableFloat);
             }
-            if (typeof(TextObject).GetMethod("SetTextVariableFromObject", new[] {typeof(string), typeof(object)}) is { } setTextVariableFromObject)
+            if (AccessTools2.Method(typeof(TextObject), "SetTextVariableFromObject", new[] { typeof(string), typeof(object) }) is { } setTextVariableFromObject)
             {
-                SetTextVariableFromObject = ReflectionHelper.GetDelegate<SetTextVariableFromObjectDelegate>(setTextVariableFromObject);
+                SetTextVariableFromObject = AccessTools2.GetDelegate<SetTextVariableFromObjectDelegate>(setTextVariableFromObject);
             }
         }
 
@@ -123,7 +125,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
         {
             if (FormatterServices.GetUninitializedObject(typeof(TextObject)) is TextObject textObject)
             {
-                ValueField?.SetValue(textObject, value ?? string.Empty);
+                if (Value is not null)
+                    Value(textObject) = value ?? string.Empty;
                 return textObject;
             }
             return null;
@@ -193,6 +196,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
     }
 }
 
+#if !BANNERLORDBUTRSHARED_ENABLE_WARNINGS
 #pragma warning restore
+#endif
 #nullable restore
 #endif // BANNERLORDBUTRSHARED_DISABLE

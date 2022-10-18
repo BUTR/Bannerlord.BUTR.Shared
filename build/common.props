@@ -12,7 +12,7 @@
 
     <Authors>BUTR</Authors>
 
-    <DefineConstants>$(DefineConstants);BUTRDEPENDENCYINJECTION_ENABLEWARNINGS;BUTRDEPENDENCYINJECTION_PUBLIC;BUTRDEPENDENCYINJECTION_INTERNAL;</DefineConstants>
+    <DefineConstants>$(DefineConstants);BUTRDEPENDENCYINJECTION_ENABLEWARNINGS;BUTRDEPENDENCYINJECTION_PUBLIC;BUTRDEPENDENCYINJECTION_INTERNAL;BANNERLORDBUTRSHARED_ENABLE_WARNINGS;</DefineConstants>
 
     <NoWarn>$(NoWarn);NU1701</NoWarn>
   </PropertyGroup>
@@ -25,7 +25,7 @@
     <PackBuildOutput>false</PackBuildOutput>
     <PackSymbols>false</PackSymbols>
     <PackCompile>false</PackCompile>
-    <PackEmbeddedResource>false</PackEmbeddedResource>
+    <PackEmbeddedResource>true</PackEmbeddedResource>
     <PackDependencies>false</PackDependencies>
     <EnablePackCleanup>true</EnablePackCleanup>
     <EnablePackInference>true</EnablePackInference>

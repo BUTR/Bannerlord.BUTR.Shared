@@ -38,10 +38,15 @@
 
 #if !BANNERLORDBUTRSHARED_DISABLE
 #nullable enable
+#if !BANNERLORDBUTRSHARED_ENABLE_WARNINGS
 #pragma warning disable
+#endif
 
 namespace Bannerlord.BUTR.Shared.Helpers
 {
+    using global::HarmonyLib.BUTR.Extensions;
+
+    using global::System;
     using global::System.Collections.Generic;
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
@@ -64,7 +69,6 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static readonly GetVersionStrDelegateV1? GetVersionStrV1;
         private static readonly GetVersionStrDelegateV2? GetVersionStrV2;
 
-        /*
         private delegate void SetApplicationVersionTypeDelegate(object instance, ApplicationVersionType applicationVersionType);
         private static readonly SetApplicationVersionTypeDelegate? SetApplicationVersionType;
 
@@ -79,14 +83,9 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         private delegate void SetChangeSetDelegate(object instance, int changeSet);
         private static readonly SetChangeSetDelegate? SetChangeSet;
-        */
 
-        private static readonly PropertyInfo? ApplicationVersionTypeProperty;
-        private static readonly PropertyInfo? MajorProperty;
-        private static readonly PropertyInfo? MinorProperty;
-        private static readonly PropertyInfo? RevisionProperty;
-        private static readonly PropertyInfo? ChangeSetProperty;
-        private static readonly PropertyInfo? VersionGameTypeProperty;
+        private delegate void SetVersionGameTypeDelegate(object instance, int versionGameType);
+        private static readonly SetVersionGameTypeDelegate? SetVersionGameType;
 
         private delegate ApplicationVersion GetEmptyDelegate();
         private static readonly GetEmptyDelegate? GetEmpty;
@@ -95,33 +94,19 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         static ApplicationVersionHelper()
         {
-            var all = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Instance;
+            SetApplicationVersionType = AccessTools2.GetPropertySetterDelegate<SetApplicationVersionTypeDelegate>(typeof(ApplicationVersion), "ApplicationVersionType");
+            SetMajor = AccessTools2.GetPropertySetterDelegate<SetMajorDelegate>(typeof(ApplicationVersion), "Major");
+            SetMinor = AccessTools2.GetPropertySetterDelegate<SetMinorDelegate>(typeof(ApplicationVersion), "Minor");
+            SetRevision = AccessTools2.GetPropertySetterDelegate<SetRevisionDelegate>(typeof(ApplicationVersion), "Revision");
+            SetChangeSet = AccessTools2.GetPropertySetterDelegate<SetChangeSetDelegate>(typeof(ApplicationVersion), "ChangeSet");
+            SetVersionGameType = AccessTools2.GetPropertySetterDelegate<SetVersionGameTypeDelegate>(typeof(ApplicationVersion), "VersionGameType");
 
-            /*
-            SetApplicationVersionType = ReflectionHelper.GetDelegate<SetApplicationVersionTypeDelegate>(typeof(ApplicationVersion).GetProperty("ApplicationVersionType", all)?.SetMethod);
-            SetMajor = ReflectionHelper.GetDelegate<SetMajorDelegate>(typeof(ApplicationVersion).GetProperty("Major", all)?.SetMethod);
-            SetMinor = ReflectionHelper.GetDelegate<SetMinorDelegate>(typeof(ApplicationVersion).GetProperty("Minor", all)?.SetMethod);
-            SetRevision = ReflectionHelper.GetDelegate<SetRevisionDelegate>(typeof(ApplicationVersion).GetProperty("Revision", all)?.SetMethod);
-            SetChangeSet = ReflectionHelper.GetDelegate<SetChangeSetDelegate>(typeof(ApplicationVersion).GetProperty("ChangeSet", all)?.SetMethod);
-            */
+            GetEmpty = AccessTools2.GetPropertyGetterDelegate<GetEmptyDelegate>(typeof(ApplicationVersion), "Empty");
 
-            ApplicationVersionTypeProperty = typeof(ApplicationVersion).GetProperty("ApplicationVersionType", all);
-            MajorProperty = typeof(ApplicationVersion).GetProperty("Major", all);
-            MinorProperty = typeof(ApplicationVersion).GetProperty( "Minor", all);
-            RevisionProperty = typeof(ApplicationVersion).GetProperty( "Revision", all);
-            ChangeSetProperty = typeof(ApplicationVersion).GetProperty( "ChangeSet", all);
-            VersionGameTypeProperty = typeof(ApplicationVersion).GetProperty( "VersionGameType", all);
-
-            GetEmpty = ReflectionHelper.GetDelegate<GetEmptyDelegate>(typeof(ApplicationVersion).GetProperty("Empty", BindingFlags.Public | BindingFlags.Static)?.GetMethod);
-
-            if (typeof(Managed).GetMethod("GetVersionStr", all) is { } getVersionStrMethod)
-            {
-                var @params = getVersionStrMethod?.GetParameters();
-                if (@params.Length == 0)
-                    GetVersionStrV1 = ReflectionHelper.GetDelegate<GetVersionStrDelegateV1>(getVersionStrMethod);
-                if (@params.Length == 1 && @params[0].ParameterType == typeof(string))
-                    GetVersionStrV2 = ReflectionHelper.GetDelegate<GetVersionStrDelegateV2>(getVersionStrMethod);
-            }
+            if (AccessTools2.Method(typeof(Managed), "GetVersionStr", new Type[] { }) is { } v1)
+                GetVersionStrV1 = AccessTools2.GetDelegate<GetVersionStrDelegateV1>(v1);
+            if (AccessTools2.Method(typeof(Managed), "GetVersionStr", new Type[] { typeof(string) }) is { } v2)
+                GetVersionStrV2 = AccessTools2.GetDelegate<GetVersionStrDelegateV2>(v2);
         }
 
         private static string GetPrefix(ApplicationVersionType applicationVersionType) => (int) applicationVersionType switch
@@ -207,21 +192,13 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
 
             var boxedVersion = FormatterServices.GetUninitializedObject(typeof(ApplicationVersion)); // https://stackoverflow.com/a/6280540
-            ApplicationVersionTypeProperty?.SetValue(boxedVersion, applicationVersionType);
-            MajorProperty?.SetValue(boxedVersion, major);
-            MinorProperty?.SetValue(boxedVersion, minor);
-            RevisionProperty?.SetValue(boxedVersion, revision);
-            ChangeSetProperty?.SetValue(boxedVersion, changeSet);
-            VersionGameTypeProperty?.SetValue(boxedVersion, 0);
+            SetApplicationVersionType?.Invoke(boxedVersion, applicationVersionType);
+            SetMajor?.Invoke(boxedVersion, major);
+            SetMinor?.Invoke(boxedVersion, minor);
+            SetRevision?.Invoke(boxedVersion, revision);
+            SetChangeSet?.Invoke(boxedVersion, changeSet);
+            SetVersionGameType?.Invoke(boxedVersion, 0);
             version = (ApplicationVersion) boxedVersion;
-
-            /*
-            if (SetApplicationVersionType is not null) SetApplicationVersionType(version, applicationVersionType);
-            if (SetMajor is not null) SetMajor(version, major);
-            if (SetMinor is not null) SetMinor(version, minor);
-            if (SetRevision is not null) SetRevision(version, revision);
-            if (SetChangeSet is not null) SetChangeSet(version, changeSet);
-            */
 
             return true;
         }
@@ -284,6 +261,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
     }
 }
 
+#if !BANNERLORDBUTRSHARED_ENABLE_WARNINGS
 #pragma warning restore
+#endif
 #nullable restore
 #endif // BANNERLORDBUTRSHARED_DISABLE
