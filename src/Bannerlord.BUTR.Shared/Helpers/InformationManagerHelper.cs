@@ -57,9 +57,16 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #endif
     internal class InformationManagerHelper
     {
-        private record InformationMessageWrapper(object Object)
+        private class InformationMessageWrapper
         {
             public static InformationMessageWrapper Create(object @object) => new(@object);
+
+            public object Object { get; }
+
+            public InformationMessageWrapper(object @object)
+            {
+                Object = @object;
+            }
         }
 
         private static class InformationMessageUtils
