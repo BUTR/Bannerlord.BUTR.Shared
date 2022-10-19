@@ -57,15 +57,86 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #endif
     internal class InformationManagerHelper
     {
-        private class InformationMessageWrapper
+        private static class InquiryDataUtils
         {
-            public static InformationMessageWrapper Create(object @object) => new(@object);
+            private delegate object CtorV1Delegate(string titleText,
+                string text,
+                bool isAffirmativeOptionShown,
+                bool isNegativeOptionShown,
+                string affirmativeText,
+                string negativeText,
+                Action affirmativeAction,
+                Action negativeAction,
+                string soundEventPath = "");
+            private static readonly CtorV1Delegate? V1;
 
-            public object Object { get; }
+            private delegate object CtorV2Delegate(string titleText,
+                string text,
+                bool isAffirmativeOptionShown,
+                bool isNegativeOptionShown,
+                string affirmativeText,
+                string negativeText,
+                Action affirmativeAction,
+                Action negativeAction,
+                string soundEventPath = "",
+                float expireTime = 0f,
+                Action? timeoutAction = null);
+            private static readonly CtorV2Delegate? V2;
 
-            public InformationMessageWrapper(object @object)
+            static InquiryDataUtils()
             {
-                Object = @object;
+                var type = AccessTools2.TypeByName("TaleWorlds.Library.InquiryData");
+
+                if (AccessTools2.Constructor(type, new[] { typeof(string), typeof(string), typeof(bool), typeof(bool), typeof(string), typeof(string), typeof(Action), typeof(Action), typeof(string) }) is { } v1)
+                    V1 = AccessTools2.GetDelegate<CtorV1Delegate>(v1);
+
+                if (AccessTools2.Constructor(type, new[] { typeof(string), typeof(string), typeof(bool), typeof(bool), typeof(string), typeof(string), typeof(Action), typeof(Action), typeof(string), typeof(float), typeof(Action) }) is { } v2)
+                    V2 = AccessTools2.GetDelegate<CtorV2Delegate>(v2);
+            }
+
+            public static object? Create(string titleText,
+                string text,
+                bool isAffirmativeOptionShown,
+                bool isNegativeOptionShown,
+                string affirmativeText,
+                string negativeText,
+                Action affirmativeAction,
+                Action negativeAction,
+                string soundEventPath = "",
+                float expireTime = 0f,
+                Action? timeoutAction = null)
+            {
+                if (V1 is not null)
+                {
+                    var obj = V1(titleText,
+                        text,
+                        isAffirmativeOptionShown,
+                        isNegativeOptionShown,
+                        affirmativeText,
+                        negativeText,
+                        affirmativeAction,
+                        negativeAction,
+                        soundEventPath);
+                    return obj;
+                }
+
+                if (V2 is not null)
+                {
+                    var obj = V2(titleText,
+                        text,
+                        isAffirmativeOptionShown,
+                        isNegativeOptionShown,
+                        affirmativeText,
+                        negativeText,
+                        affirmativeAction,
+                        negativeAction,
+                        soundEventPath,
+                        expireTime,
+                        timeoutAction);
+                    return obj;
+                }
+
+                return null;
             }
         }
 
@@ -83,10 +154,10 @@ namespace Bannerlord.BUTR.Shared.Helpers
                     CtorV1 = AccessTools2.GetDelegate<CtorV1Delegate>(v1);
             }
 
-            public static InformationMessageWrapper? Create(string information, Color color)
+            public static object? Create(string information, Color color)
             {
                 if (CtorV1 is not null)
-                    return InformationMessageWrapper.Create(CtorV1(information, color));
+                    return CtorV1(information, color);
 
                 return null;
             }
@@ -97,6 +168,9 @@ namespace Bannerlord.BUTR.Shared.Helpers
             private delegate void DisplayMessageV1Delegate(object data);
             private static readonly DisplayMessageV1Delegate? DisplayMessageV1;
 
+            private delegate void ShowInquiryV1Delegate(object data, bool pauseGameActiveState = false);
+            private static readonly ShowInquiryV1Delegate? ShowInquiryV1;
+
             static InformationManagerUtils()
             {
                 var type = AccessTools2.TypeByName("TaleWorlds.Core.InformationManager") ??
@@ -105,8 +179,14 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 var informationMessageType = AccessTools2.TypeByName("TaleWorlds.Core.InformationMessage") ??
                                              AccessTools2.TypeByName("TaleWorlds.Library.InformationMessage");
 
-                if (AccessTools2.Method(type, "DisplayMessage", new[] { informationMessageType }) is { } v1)
-                    DisplayMessageV1 = AccessTools2.GetDelegate<DisplayMessageV1Delegate>(v1);
+                var inquireDataType = AccessTools2.TypeByName("TaleWorlds.Core.InquiryData") ??
+                                             AccessTools2.TypeByName("TaleWorlds.Library.InquiryData");
+
+                if (AccessTools2.Method(type, "DisplayMessage", new[] { informationMessageType }) is { } displayMessageV1)
+                    DisplayMessageV1 = AccessTools2.GetDelegate<DisplayMessageV1Delegate>(displayMessageV1);
+
+                if (AccessTools2.Method(type, "InquiryData", new[] { inquireDataType, typeof(bool) }) is { } inquireDataV1)
+                    ShowInquiryV1 = AccessTools2.GetDelegate<ShowInquiryV1Delegate>(inquireDataV1);
             }
 
             public static void DisplayMessage(string information, Color color)
@@ -117,13 +197,77 @@ namespace Bannerlord.BUTR.Shared.Helpers
                     return;
 
                 if (DisplayMessageV1 is not null)
-                    DisplayMessageV1(message.Object);
+                    DisplayMessageV1(message);
+            }
+
+            public static void ShowInquiry(string titleText,
+                string text,
+                bool isAffirmativeOptionShown,
+                bool isNegativeOptionShown,
+                string affirmativeText,
+                string negativeText,
+                Action affirmativeAction,
+                Action negativeAction,
+                string soundEventPath,
+                float expireTime,
+                Action? timeoutAction,
+
+                bool pauseGameActiveState)
+            {
+                var data = InquiryDataUtils.Create(titleText,
+                    text,
+                    isAffirmativeOptionShown,
+                    isNegativeOptionShown,
+                    affirmativeText,
+                    negativeText,
+                    affirmativeAction,
+                    negativeAction,
+                    soundEventPath,
+                    expireTime,
+                    timeoutAction);
+
+                if (data is null)
+                    return;
+
+                if (ShowInquiryV1 is not null)
+                {
+                    ShowInquiryV1(data, pauseGameActiveState);
+                }
             }
         }
 
         public static void DisplayMessage(string information, Color color)
         {
             InformationManagerUtils.DisplayMessage(information, color);
+        }
+
+        public static void ShowInquiry(string titleText,
+            string text,
+            bool isAffirmativeOptionShown,
+            bool isNegativeOptionShown,
+            string affirmativeText,
+            string negativeText,
+            Action affirmativeAction,
+            Action negativeAction,
+            string soundEventPath = "",
+            float expireTime = 0f,
+            Action? timeoutAction = null,
+
+            bool pauseGameActiveState = false)
+        {
+            InformationManagerUtils.ShowInquiry(titleText,
+                text,
+                isAffirmativeOptionShown,
+                isNegativeOptionShown,
+                affirmativeText,
+                negativeText,
+                affirmativeAction,
+                negativeAction,
+                soundEventPath,
+                expireTime,
+                timeoutAction,
+
+                pauseGameActiveState);
         }
     }
 }
