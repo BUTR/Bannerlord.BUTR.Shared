@@ -69,7 +69,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static readonly GetVersionStrDelegateV1? GetVersionStrV1;
         private static readonly GetVersionStrDelegateV2? GetVersionStrV2;
 
-        private delegate void SetApplicationVersionTypeDelegate(object instance, ApplicationVersionType applicationVersionType);
+        private delegate void SetApplicationVersionTypeDelegate(ApplicationVersion instance, ApplicationVersionType applicationVersionType);
         private static readonly SetApplicationVersionTypeDelegate? SetApplicationVersionType;
 
         private delegate void SetMajorDelegate(ApplicationVersion instance, int major);
@@ -191,12 +191,14 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 skipCheck = true;
             }
 
-            SetApplicationVersionType?.Invoke(version, applicationVersionType);
-            SetMajor?.Invoke(version, major);
-            SetMinor?.Invoke(version, minor);
-            SetRevision?.Invoke(version, revision);
-            SetChangeSet?.Invoke(version, changeSet);
-            SetVersionGameType?.Invoke(version, 0);
+            var boxedVersion = (ApplicationVersion) FormatterServices.GetUninitializedObject(typeof(ApplicationVersion)); // https://stackoverflow.com/a/6280540
+            SetApplicationVersionType?.Invoke(boxedVersion, applicationVersionType);
+            SetMajor?.Invoke(boxedVersion, major);
+            SetMinor?.Invoke(boxedVersion, minor);
+            SetRevision?.Invoke(boxedVersion, revision);
+            SetChangeSet?.Invoke(boxedVersion, changeSet);
+            SetVersionGameType?.Invoke(boxedVersion, 0);
+            version = (ApplicationVersion) boxedVersion;
 
             return true;
         }
