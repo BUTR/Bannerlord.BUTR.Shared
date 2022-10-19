@@ -69,23 +69,12 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static readonly GetVersionStrDelegateV1? GetVersionStrV1;
         private static readonly GetVersionStrDelegateV2? GetVersionStrV2;
 
-        private delegate void SetApplicationVersionTypeDelegate(ApplicationVersion instance, ApplicationVersionType applicationVersionType);
-        private static readonly SetApplicationVersionTypeDelegate? SetApplicationVersionType;
-
-        private delegate void SetMajorDelegate(ApplicationVersion instance, int major);
-        private static readonly SetMajorDelegate? SetMajor;
-
-        private delegate void SetMinorDelegate(ApplicationVersion instance, int minor);
-        private static readonly SetMinorDelegate? SetMinor;
-
-        private delegate void SetRevisionDelegate(ApplicationVersion instance, int revision);
-        private static readonly SetRevisionDelegate? SetRevision;
-
-        private delegate void SetChangeSetDelegate(ApplicationVersion instance, int changeSet);
-        private static readonly SetChangeSetDelegate? SetChangeSet;
-
-        private delegate void SetVersionGameTypeDelegate(ApplicationVersion instance, int versionGameType);
-        private static readonly SetVersionGameTypeDelegate? SetVersionGameType;
+        private static readonly PropertyInfo? ApplicationVersionTypeProperty;
+        private static readonly PropertyInfo? MajorProperty;
+        private static readonly PropertyInfo? MinorProperty;
+        private static readonly PropertyInfo? RevisionProperty;
+        private static readonly PropertyInfo? ChangeSetProperty;
+        private static readonly PropertyInfo? VersionGameTypeProperty;
 
         private delegate ApplicationVersion GetEmptyDelegate();
         private static readonly GetEmptyDelegate? GetEmpty;
@@ -94,12 +83,13 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         static ApplicationVersionHelper()
         {
-            SetApplicationVersionType = AccessTools2.GetPropertySetterDelegate<SetApplicationVersionTypeDelegate>(typeof(ApplicationVersion), "ApplicationVersionType");
-            SetMajor = AccessTools2.GetPropertySetterDelegate<SetMajorDelegate>(typeof(ApplicationVersion), "Major");
-            SetMinor = AccessTools2.GetPropertySetterDelegate<SetMinorDelegate>(typeof(ApplicationVersion), "Minor");
-            SetRevision = AccessTools2.GetPropertySetterDelegate<SetRevisionDelegate>(typeof(ApplicationVersion), "Revision");
-            SetChangeSet = AccessTools2.GetPropertySetterDelegate<SetChangeSetDelegate>(typeof(ApplicationVersion), "ChangeSet");
-            SetVersionGameType = AccessTools2.GetPropertySetterDelegate<SetVersionGameTypeDelegate>(typeof(ApplicationVersion), "VersionGameType");
+            // Don't use delegates, we need to implement ref instance first
+            ApplicationVersionTypeProperty = AccessTools2.Property(typeof(ApplicationVersion), "ApplicationVersionType");
+            MajorProperty = AccessTools2.Property(typeof(ApplicationVersion), "Major");
+            MinorProperty = AccessTools2.Property(typeof(ApplicationVersion), "Minor");
+            RevisionProperty = AccessTools2.Property(typeof(ApplicationVersion), "Revision");
+            ChangeSetProperty = AccessTools2.Property(typeof(ApplicationVersion), "ChangeSet");
+            VersionGameTypeProperty = AccessTools2.Property(typeof(ApplicationVersion), "VersionGameType");
 
             GetEmpty = AccessTools2.GetPropertyGetterDelegate<GetEmptyDelegate>(typeof(ApplicationVersion), "Empty");
 
@@ -191,13 +181,13 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 skipCheck = true;
             }
 
-            var boxedVersion = (ApplicationVersion) FormatterServices.GetUninitializedObject(typeof(ApplicationVersion)); // https://stackoverflow.com/a/6280540
-            SetApplicationVersionType?.Invoke(boxedVersion, applicationVersionType);
-            SetMajor?.Invoke(boxedVersion, major);
-            SetMinor?.Invoke(boxedVersion, minor);
-            SetRevision?.Invoke(boxedVersion, revision);
-            SetChangeSet?.Invoke(boxedVersion, changeSet);
-            SetVersionGameType?.Invoke(boxedVersion, 0);
+            var boxedVersion = (object) version; // https://stackoverflow.com/a/6280540
+            ApplicationVersionTypeProperty?.SetValue(boxedVersion, applicationVersionType);
+            MajorProperty?.SetValue(boxedVersion, major);
+            MinorProperty?.SetValue(boxedVersion, minor);
+            RevisionProperty?.SetValue(boxedVersion, revision);
+            ChangeSetProperty?.SetValue(boxedVersion, changeSet);
+            VersionGameTypeProperty?.SetValue(boxedVersion, 0);
             version = (ApplicationVersion) boxedVersion;
 
             return true;
