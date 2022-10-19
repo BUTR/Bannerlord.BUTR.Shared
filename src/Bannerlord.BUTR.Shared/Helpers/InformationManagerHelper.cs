@@ -171,6 +171,9 @@ namespace Bannerlord.BUTR.Shared.Helpers
             private delegate void ShowInquiryV1Delegate(object data, bool pauseGameActiveState = false);
             private static readonly ShowInquiryV1Delegate? ShowInquiryV1;
 
+            private delegate void ShowInquiryV2Delegate(object data, bool pauseGameActiveState = false, bool prioritize = false);
+            private static readonly ShowInquiryV2Delegate? ShowInquiryV2;
+
             static InformationManagerUtils()
             {
                 var type = AccessTools2.TypeByName("TaleWorlds.Core.InformationManager") ??
@@ -185,8 +188,10 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 if (AccessTools2.Method(type, "DisplayMessage", new[] { informationMessageType }) is { } displayMessageV1)
                     DisplayMessageV1 = AccessTools2.GetDelegate<DisplayMessageV1Delegate>(displayMessageV1);
 
-                if (AccessTools2.Method(type, "InquiryData", new[] { inquireDataType, typeof(bool) }) is { } inquireDataV1)
+                if (AccessTools2.Method(type, "ShowInquiry", new[] { inquireDataType, typeof(bool) }) is { } inquireDataV1)
                     ShowInquiryV1 = AccessTools2.GetDelegate<ShowInquiryV1Delegate>(inquireDataV1);
+                if (AccessTools2.Method(type, "ShowInquiry", new[] { inquireDataType, typeof(bool), typeof(bool) }) is { } inquireDataV2)
+                    ShowInquiryV2 = AccessTools2.GetDelegate<ShowInquiryV2Delegate>(inquireDataV2);
             }
 
             public static void DisplayMessage(string information, Color color)
@@ -212,7 +217,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 float expireTime,
                 Action? timeoutAction,
 
-                bool pauseGameActiveState)
+                bool pauseGameActiveState,
+                bool prioritize)
             {
                 var data = InquiryDataUtils.Create(titleText,
                     text,
@@ -232,6 +238,10 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 if (ShowInquiryV1 is not null)
                 {
                     ShowInquiryV1(data, pauseGameActiveState);
+                }
+                if (ShowInquiryV2 is not null)
+                {
+                    ShowInquiryV2(data, pauseGameActiveState, prioritize);
                 }
             }
         }
@@ -253,7 +263,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
             float expireTime = 0f,
             Action? timeoutAction = null,
 
-            bool pauseGameActiveState = false)
+            bool pauseGameActiveState = false,
+            bool prioritize = false)
         {
             InformationManagerUtils.ShowInquiry(titleText,
                 text,
@@ -267,7 +278,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 expireTime,
                 timeoutAction,
 
-                pauseGameActiveState);
+                pauseGameActiveState,
+                prioritize);
         }
     }
 }
