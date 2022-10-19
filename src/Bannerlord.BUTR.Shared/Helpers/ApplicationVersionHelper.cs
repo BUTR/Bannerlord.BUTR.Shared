@@ -72,19 +72,19 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private delegate void SetApplicationVersionTypeDelegate(object instance, ApplicationVersionType applicationVersionType);
         private static readonly SetApplicationVersionTypeDelegate? SetApplicationVersionType;
 
-        private delegate void SetMajorDelegate(object instance, int major);
+        private delegate void SetMajorDelegate(ApplicationVersion instance, int major);
         private static readonly SetMajorDelegate? SetMajor;
 
-        private delegate void SetMinorDelegate(object instance, int minor);
+        private delegate void SetMinorDelegate(ApplicationVersion instance, int minor);
         private static readonly SetMinorDelegate? SetMinor;
 
-        private delegate void SetRevisionDelegate(object instance, int revision);
+        private delegate void SetRevisionDelegate(ApplicationVersion instance, int revision);
         private static readonly SetRevisionDelegate? SetRevision;
 
-        private delegate void SetChangeSetDelegate(object instance, int changeSet);
+        private delegate void SetChangeSetDelegate(ApplicationVersion instance, int changeSet);
         private static readonly SetChangeSetDelegate? SetChangeSet;
 
-        private delegate void SetVersionGameTypeDelegate(object instance, int versionGameType);
+        private delegate void SetVersionGameTypeDelegate(ApplicationVersion instance, int versionGameType);
         private static readonly SetVersionGameTypeDelegate? SetVersionGameType;
 
         private delegate ApplicationVersion GetEmptyDelegate();
@@ -191,14 +191,12 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 skipCheck = true;
             }
 
-            var boxedVersion = FormatterServices.GetUninitializedObject(typeof(ApplicationVersion)); // https://stackoverflow.com/a/6280540
-            SetApplicationVersionType?.Invoke(boxedVersion, applicationVersionType);
-            SetMajor?.Invoke(boxedVersion, major);
-            SetMinor?.Invoke(boxedVersion, minor);
-            SetRevision?.Invoke(boxedVersion, revision);
-            SetChangeSet?.Invoke(boxedVersion, changeSet);
-            SetVersionGameType?.Invoke(boxedVersion, 0);
-            version = (ApplicationVersion) boxedVersion;
+            SetApplicationVersionType?.Invoke(version, applicationVersionType);
+            SetMajor?.Invoke(version, major);
+            SetMinor?.Invoke(version, minor);
+            SetRevision?.Invoke(version, revision);
+            SetChangeSet?.Invoke(version, changeSet);
+            SetVersionGameType?.Invoke(version, 0);
 
             return true;
         }
