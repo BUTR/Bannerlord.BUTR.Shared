@@ -66,12 +66,14 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
-    internal record ModuleInfoExtendedWithPath : ModuleInfoExtended
+    internal record ModuleInfoExtendedWithMetadata : ModuleInfoExtended
     {
+        public bool IsExternal { get; }
         public string Path { get; }
 
-        public ModuleInfoExtendedWithPath(ModuleInfoExtended module, string path) : base(module)
+        public ModuleInfoExtendedWithMetadata(ModuleInfoExtended module, bool isExternal, string path) : base(module)
         {
+            IsExternal = isExternal;
             Path = path;
         }
     }

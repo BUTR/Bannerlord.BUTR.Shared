@@ -108,9 +108,9 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
         }
 
-        private static Lazy<List<ModuleInfoExtendedWithPath>> _cachedModules = new(() =>
+        private static Lazy<List<ModuleInfoExtendedWithMetadata>> _cachedModules = new(() =>
         {
-            var list = new List<ModuleInfoExtendedWithPath>();
+            var list = new List<ModuleInfoExtendedWithMetadata>();
             var foundIds = new HashSet<string>();
             foreach (var moduleInfo in GetPhysicalModules().Concat(GetPlatformModules()))
             {
@@ -171,18 +171,18 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static string GetFullPathWithEndingSlashes(string input) =>
             $"{Path.GetFullPath(input).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)}{Path.DirectorySeparatorChar}";
 
-        private static IEnumerable<ModuleInfoExtendedWithPath> GetPhysicalModules()
+        private static IEnumerable<ModuleInfoExtendedWithMetadata> GetPhysicalModules()
         {
             if (string.IsNullOrEmpty(TaleWorlds.Library.BasePath.Name)) yield break;
 
             foreach (var modulePath in Directory.GetDirectories(Path.Combine(TaleWorlds.Library.BasePath.Name, ModulesFolder)))
             {
                 if (TryReadXml(Path.Combine(modulePath, SubModuleFile), out var xml)&& ModuleInfoExtended.FromXml(xml) is { } moduleInfo)
-                    yield return new ModuleInfoExtendedWithPath(moduleInfo, Path.GetFullPath(modulePath));
+                    yield return new ModuleInfoExtendedWithMetadata(moduleInfo, false, Path.GetFullPath(modulePath));
             }
         }
 
-        private static IEnumerable<ModuleInfoExtendedWithPath> GetPlatformModules()
+        private static IEnumerable<ModuleInfoExtendedWithMetadata> GetPlatformModules()
         {
             if (_platformModuleExtensionField == null) yield break;
 
@@ -198,7 +198,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             foreach (string modulePath in modulePaths)
             {
                 if (TryReadXml(Path.Combine(modulePath, SubModuleFile), out var xml) && ModuleInfoExtended.FromXml(xml) is { } moduleInfo)
-                    yield return new ModuleInfoExtendedWithPath(moduleInfo, Path.GetFullPath(modulePath));
+                    yield return new ModuleInfoExtendedWithMetadata(moduleInfo, true, Path.GetFullPath(modulePath));
             }
         }
 
