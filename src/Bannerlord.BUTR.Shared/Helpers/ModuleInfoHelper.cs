@@ -62,6 +62,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.Xml;
 
     using global::TaleWorlds.Library;
+    using global::TaleWorlds.Localization;
+    using global::TaleWorlds.ModuleManager;
     using global::TaleWorlds.MountAndBlade;
 
     using Module = TaleWorlds.MountAndBlade.Module;
@@ -74,30 +76,18 @@ namespace Bannerlord.BUTR.Shared.Helpers
         public const string ModulesFolder = "Modules";
         public const string SubModuleFile = "SubModule.xml";
 
-        private delegate string[] GetModulesNamesDelegate();
-
-        private static readonly GetModulesNamesDelegate? GetModulesNames;
-
-        private static readonly AccessTools.FieldRef<object>? _platformModuleExtensionField;
-
-        private delegate object GetCurrentModuleDelegate();
-        private static readonly GetCurrentModuleDelegate? GetCurrentModule;
+        private static readonly AccessTools.FieldRef<IPlatformModuleExtension>? _platformModuleExtensionField;
 
         static ModuleInfoHelper()
         {
-            GetModulesNames = AccessTools2.GetDelegate<GetModulesNamesDelegate>("TaleWorlds.Engine.Utilities:GetModulesNames");
-
-            GetCurrentModule = AccessTools2.GetPropertyGetterDelegate<GetCurrentModuleDelegate>("TaleWorlds.MountAndBlade.Module:CurrentModule");
-            _platformModuleExtensionField = AccessTools2.StaticFieldRefAccess<object>("TaleWorlds.ModuleManager.ModuleHelper:_platformModuleExtension");
+            _platformModuleExtensionField = AccessTools2.StaticFieldRefAccess<IPlatformModuleExtension>("TaleWorlds.ModuleManager.ModuleHelper:_platformModuleExtension");
         }
 
         public static ModuleInfoExtended? LoadFromId(string id) => GetModules().FirstOrDefault(x => x.Id == id);
 
         public static IEnumerable<ModuleInfoExtended> GetLoadedModules()
         {
-            if (GetModulesNames == null) yield break;
-
-            var moduleNames = GetModulesNames();
+            var moduleNames = TaleWorlds.Engine.Utilities.GetModulesNames();
             if (moduleNames.Length == 0) yield break;
 
             var allModulesAvailable = GetModules().ToDictionary(x => x.Id, x => x);
@@ -126,10 +116,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
         /// <summary>
         /// Provides unordered modules
         /// </summary>
-        public static IEnumerable<ModuleInfoExtended> GetModules()
-        {
-            return _cachedModules.Value;
-        }
+        public static IEnumerable<ModuleInfoExtended> GetModules() => _cachedModules.Value;
 
         private static ConcurrentDictionary<string, string> _cachedAssemblyLocationToModulePath = new();
         public static string? GetModulePath(Type? type)
@@ -189,10 +176,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             var platformModuleExtension = _platformModuleExtensionField();
             if (platformModuleExtension == null) yield break;
 
-            var getModulePathsInvoker = AccessTools2.Method(platformModuleExtension.GetType(), "GetModulePaths");
-            if (getModulePathsInvoker == null) yield break;
-
-            var modulePaths = getModulePathsInvoker.Invoke(platformModuleExtension, Array.Empty<object>()) as string[];
+            var modulePaths = platformModuleExtension.GetModulePaths();
             if (modulePaths == null) yield break;
 
             foreach (string modulePath in modulePaths)
@@ -203,9 +187,9 @@ namespace Bannerlord.BUTR.Shared.Helpers
         }
 
         public static bool CheckIfSubModuleCanBeLoaded(SubModuleInfoExtended subModuleInfo) => CheckIfSubModuleCanBeLoaded(subModuleInfo,
-            ApplicationPlatform.CurrentPlatform, ApplicationPlatform.CurrentRuntimeLibrary, Module.CurrentModule.StartupInfo.DedicatedServerType);
+            ApplicationPlatform.CurrentPlatform, ApplicationPlatform.CurrentRuntimeLibrary, Module.CurrentModule.StartupInfo.DedicatedServerType, Module.CurrentModule.StartupInfo.PlayerHostedDedicatedServer);
 
-        public static bool CheckIfSubModuleCanBeLoaded(SubModuleInfoExtended subModuleInfo, Platform cPlatform, Runtime cRuntime, DedicatedServerType cServerType)
+        public static bool CheckIfSubModuleCanBeLoaded(SubModuleInfoExtended subModuleInfo, Platform cPlatform, Runtime cRuntime, DedicatedServerType cServerType, bool playerHostedDedicatedServer)
         {
             if (subModuleInfo.Tags.Count <= 0) return true;
 
@@ -214,16 +198,16 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 if (!Enum.TryParse<SubModuleTags>(key, out var tag))
                     continue;
 
-                if (values.Any(value => !GetSubModuleTagValiditiy(tag, value, cPlatform, cRuntime, cServerType)))
+                if (values.Any(value => !GetSubModuleTagValiditiy(tag, value, cPlatform, cRuntime, cServerType, playerHostedDedicatedServer)))
                     return false;
             }
             return true;
         }
 
         public static bool GetSubModuleTagValiditiy(SubModuleTags tag, string value) => GetSubModuleTagValiditiy(tag, value,
-            ApplicationPlatform.CurrentPlatform, ApplicationPlatform.CurrentRuntimeLibrary, Module.CurrentModule.StartupInfo.DedicatedServerType);
+            ApplicationPlatform.CurrentPlatform, ApplicationPlatform.CurrentRuntimeLibrary, Module.CurrentModule.StartupInfo.DedicatedServerType, Module.CurrentModule.StartupInfo.PlayerHostedDedicatedServer);
 
-        public static bool GetSubModuleTagValiditiy(SubModuleTags tag, string value, Platform cPlatform, Runtime cRuntime, DedicatedServerType cServerType) => tag switch
+        public static bool GetSubModuleTagValiditiy(SubModuleTags tag, string value, Platform cPlatform, Runtime cRuntime, DedicatedServerType cServerType, bool playerHostedDedicatedServer) => tag switch
         {
             SubModuleTags.RejectedPlatform => !Enum.TryParse<Platform>(value, out var platform) || cPlatform != platform,
             SubModuleTags.ExclusivePlatform => !Enum.TryParse<Platform>(value, out var platform) || cPlatform == platform,
@@ -237,7 +221,8 @@ namespace Bannerlord.BUTR.Shared.Helpers
                 "matchmaker" => cServerType == DedicatedServerType.Matchmaker,
                 _ => false
             },
-            _ => true
+            SubModuleTags.PlayerHostedDedicatedServer => playerHostedDedicatedServer && value.Equals("true"),
+            _ => true,
         };
 
         public static bool ValidateLoadOrder(Type subModuleType, out string report)
@@ -267,35 +252,35 @@ namespace Bannerlord.BUTR.Shared.Helpers
             void ReportMissingModule(string requiredModuleId)
             {
                 if (sb.Length != 0) sb.AppendLine();
-                sb.AppendLine(TextObjectHelper.Create(SErrorModuleNotFound)
-                    ?.SetTextVariable2("REQUIRED_MODULE", requiredModuleId)
+                sb.AppendLine(new TextObject(SErrorModuleNotFound)
+                    ?.SetTextVariable("REQUIRED_MODULE", requiredModuleId)
                     ?.ToString() ?? "ERROR");
             }
 
             void ReportIncompatibleModule(string deniedModuleId)
             {
                 if (sb.Length != 0) sb.AppendLine();
-                sb.AppendLine(TextObjectHelper.Create(SErrorIncompatibleModuleFound)
-                    ?.SetTextVariable2("DENIED_MODULE", deniedModuleId)
+                sb.AppendLine(new TextObject(SErrorIncompatibleModuleFound)
+                    ?.SetTextVariable("DENIED_MODULE", deniedModuleId)
                     ?.ToString() ?? "ERROR");
             }
 
             void ReportLoadingOrderIssue(string reason, string requiredModuleId)
             {
                 if (sb.Length != 0) sb.AppendLine();
-                sb.AppendLine(TextObjectHelper.Create(reason)
-                    ?.SetTextVariable2("MODULE", moduleInfo.Id)
-                    ?.SetTextVariable2("REQUIRED_MODULE", requiredModuleId)
-                    ?.SetTextVariable2("NL", Environment.NewLine)
+                sb.AppendLine(new TextObject(reason)
+                    ?.SetTextVariable("MODULE", moduleInfo.Id)
+                    ?.SetTextVariable("REQUIRED_MODULE", requiredModuleId)
+                    ?.SetTextVariable("NL", Environment.NewLine)
                     ?.ToString() ?? "ERROR");
             }
 
             void ReportMutuallyExclusiveDirectives(string requiredModuleId)
             {
                 if (sb.Length != 0) sb.AppendLine();
-                sb.AppendLine(TextObjectHelper.Create(SErrorMutuallyExclusiveDirectives)
-                    ?.SetTextVariable2("MODULE", moduleInfo.Id)
-                    ?.SetTextVariable2("REQUIRED_MODULE", requiredModuleId)
+                sb.AppendLine(new TextObject(SErrorMutuallyExclusiveDirectives)
+                    ?.SetTextVariable("MODULE", moduleInfo.Id)
+                    ?.SetTextVariable("REQUIRED_MODULE", requiredModuleId)
                     ?.ToString() ?? "ERROR");
             }
 
