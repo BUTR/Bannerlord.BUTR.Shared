@@ -54,6 +54,61 @@ namespace Bannerlord.BUTR.Shared.Helpers
 #endif
     internal static class ApplicationVersionHelper
     {
+        public static bool TryParse(string? versionAsString, out ApplicationVersion version) => TryParse(versionAsString, out version, true);
+
+        public static bool TryParse(string? versionAsString, out ApplicationVersion version, bool asMin)
+        {
+            var major = asMin ? 0 : int.MaxValue;
+            var minor = asMin ? 0 : int.MaxValue;
+            var revision = asMin ? 0 : int.MaxValue;
+            var changeSet = asMin ? 0 : int.MaxValue;
+
+            if (versionAsString is null)
+                return false;
+
+            var array = versionAsString.Split('.');
+            if (array.Length != 3 && array.Length != 4 && array[0].Length == 0)
+                return false;
+
+            var skipCheck = false;
+            if (!skipCheck && !int.TryParse(array[0].Substring(1), out major))
+            {
+                if (array[0].Substring(1) != "*") return false;
+                major = int.MinValue;
+                minor = int.MinValue;
+                revision = int.MinValue;
+                changeSet = int.MinValue;
+                skipCheck = true;
+            }
+            if (!skipCheck && !int.TryParse(array[1], out minor))
+            {
+                if (array[1] != "*") return false;
+                minor = asMin ? 0 : int.MaxValue;
+                revision = asMin ? 0 : int.MaxValue;
+                changeSet = asMin ? 0 : int.MaxValue;
+                skipCheck = true;
+            }
+            if (!skipCheck && !int.TryParse(array[2], out revision))
+            {
+                if (array[2] != "*") return false;
+                revision = asMin ? 0 : int.MaxValue;
+                changeSet = asMin ? 0 : int.MaxValue;
+                skipCheck = true;
+            }
+
+            if (!skipCheck && array.Length == 4 && !int.TryParse(array[3], out changeSet))
+            {
+                if (array[3] != "*") return false;
+                changeSet = asMin ? 0 : int.MaxValue;
+                skipCheck = true;
+            }
+
+            var applicationVersionType = ApplicationVersion.ApplicationVersionTypeFromString(array[0][0].ToString());
+
+            version = new ApplicationVersion(applicationVersionType, major, minor, revision, changeSet);
+            return true;
+        }
+
         public static string ToString(ApplicationVersion av)
         {
             var prefix = ApplicationVersion.GetPrefix(av.ApplicationVersionType);
