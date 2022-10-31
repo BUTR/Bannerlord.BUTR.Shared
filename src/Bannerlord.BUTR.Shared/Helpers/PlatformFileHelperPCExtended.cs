@@ -67,7 +67,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         private delegate object GetPlatformFileHelperDelegate();
         private static GetPlatformFileHelperDelegate? GetPlatformFileHelper =
-            AccessTools2.GetPropertyGetterDelegate<GetPlatformFileHelperDelegate>("TaleWorlds.Library.Common:PlatformFileHelper2");
+            AccessTools2.GetPropertyGetterDelegate<GetPlatformFileHelperDelegate>("TaleWorlds.Library.Common:PlatformFileHelper");
 
 
         public static string? GetFileFullPath(PlatformFilePath filePath) =>
