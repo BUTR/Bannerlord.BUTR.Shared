@@ -65,17 +65,18 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static GetFileFullPathDelegate? GetFileFullPathMethod =
             AccessTools2.GetDelegate<GetFileFullPathDelegate>("TaleWorlds.Library.PlatformFileHelperPC:GetFileFullPath");
 
-        private static AccessTools.FieldRef<object>? PlatformFileHelper =
-            AccessTools2.StaticFieldRefAccess<object>("TaleWorlds.Library.Common:PlatformFileHelper");
+        private delegate object GetPlatformFileHelperDelegate();
+        private static GetPlatformFileHelperDelegate? GetPlatformFileHelper =
+            AccessTools2.GetPropertyGetterDelegate<GetPlatformFileHelperDelegate>("TaleWorlds.Library.Common:PlatformFileHelper2");
 
 
         public static string? GetFileFullPath(PlatformFilePath filePath) =>
-            PlatformFileHelper is not null && GetFileFullPathMethod is not null && PlatformFileHelper() is { } obj
+            GetPlatformFileHelper is not null && GetFileFullPathMethod is not null && GetPlatformFileHelper() is { } obj
                 ? GetFileFullPathMethod(obj, filePath)
                 : null;
 
         public static string? GetDirectoryFullPath(PlatformDirectoryPath directoryPath) =>
-            PlatformFileHelper is not null && GetDirectoryFullPathMethod is not null && PlatformFileHelper() is { } obj
+            GetPlatformFileHelper is not null && GetDirectoryFullPathMethod is not null && GetPlatformFileHelper() is { } obj
                 ? GetDirectoryFullPathMethod(obj, directoryPath)
                 : null;
     }
