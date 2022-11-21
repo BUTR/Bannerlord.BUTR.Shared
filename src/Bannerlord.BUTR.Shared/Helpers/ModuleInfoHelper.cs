@@ -158,7 +158,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static string GetFullPathWithEndingSlashes(string input) =>
             $"{Path.GetFullPath(input).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)}{Path.DirectorySeparatorChar}";
 
-        private static IEnumerable<ModuleInfoExtendedWithMetadata> GetPhysicalModules()
+        public static IEnumerable<ModuleInfoExtendedWithMetadata> GetPhysicalModules()
         {
             if (string.IsNullOrEmpty(TaleWorlds.Library.BasePath.Name)) yield break;
 
@@ -169,7 +169,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
         }
 
-        private static IEnumerable<ModuleInfoExtendedWithMetadata> GetPlatformModules()
+        public static IEnumerable<ModuleInfoExtendedWithMetadata> GetPlatformModules()
         {
             if (_platformModuleExtensionField == null) yield break;
 
