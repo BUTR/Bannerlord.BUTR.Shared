@@ -57,6 +57,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System.Collections.Generic;
     using global::System.Linq;
     using global::System.IO;
+    using global::System.Reflection;
     using global::System.Text;
     using global::System.Threading;
     using global::System.Xml;
@@ -362,6 +363,19 @@ namespace Bannerlord.BUTR.Shared.Helpers
             return true;
         }
 
+
+        public static bool IsModuleAssembly(ModuleInfoExtendedWithMetadata loadedModule, Assembly assembly)
+        {
+            if (assembly.IsDynamic || string.IsNullOrWhiteSpace(assembly.CodeBase))
+                return false;
+
+            var modulePath = new Uri(Path.GetFullPath(loadedModule.Path));
+            var moduleDirectory = Path.GetFileName(loadedModule.Path);
+
+            var assemblyPath = new Uri(assembly.CodeBase);
+            var relativePath = modulePath.MakeRelativeUri(assemblyPath);
+            return relativePath.OriginalString.StartsWith(moduleDirectory);
+        }
 
         private static bool TryReadXml(string path, out XmlDocument? xml)
         {
