@@ -84,9 +84,9 @@ namespace Bannerlord.BUTR.Shared.Helpers
             _platformModuleExtensionField = AccessTools2.StaticFieldRefAccess<IPlatformModuleExtension>("TaleWorlds.ModuleManager.ModuleHelper:_platformModuleExtension");
         }
 
-        public static ModuleInfoExtended? LoadFromId(string id) => GetModules().FirstOrDefault(x => x.Id == id);
+        public static ModuleInfoExtendedWithMetadata? LoadFromId(string id) => GetModules().FirstOrDefault(x => x.Id == id);
 
-        public static IEnumerable<ModuleInfoExtended> GetLoadedModules()
+        public static IEnumerable<ModuleInfoExtendedWithMetadata> GetLoadedModules()
         {
             var moduleNames = TaleWorlds.Engine.Utilities.GetModulesNames();
             if (moduleNames.Length == 0) yield break;
@@ -117,7 +117,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
         /// <summary>
         /// Provides unordered modules
         /// </summary>
-        public static IEnumerable<ModuleInfoExtended> GetModules() => _cachedModules.Value;
+        public static IEnumerable<ModuleInfoExtendedWithMetadata> GetModules() => _cachedModules.Value;
 
         private static ConcurrentDictionary<string, string> _cachedAssemblyLocationToModulePath = new();
         public static string? GetModulePath(Type? type)
@@ -150,7 +150,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static string? GetModulePath(ModuleInfoExtended module) => _cachedModules.Value.FirstOrDefault(x => x.Id == module.Id)?.Path;
 
-        public static ModuleInfoExtended? GetModuleByType(Type? type)
+        public static ModuleInfoExtendedWithMetadata? GetModuleByType(Type? type)
         {
             var modulePath = GetModulePath(type);
             return _cachedModules.Value.FirstOrDefault(x => x.Path == modulePath);
