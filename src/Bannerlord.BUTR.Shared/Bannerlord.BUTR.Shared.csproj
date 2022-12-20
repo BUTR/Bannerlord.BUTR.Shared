@@ -27,7 +27,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="Bannerlord.ModuleManager.Source" Version="5.0.161" Pack="true" />
+    <PackageReference Include="Bannerlord.ModuleManager.Source" Version="5.0.163" Pack="true" />
     <PackageReference Include="Bannerlord.ReferenceAssemblies.Core" Version="1.0.0.*" PrivateAssets="all" Pack="false" />
     <PackageReference Include="BUTR.Harmony.Analyzer" Version="1.0.1.44" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" Pack="false" />
     <PackageReference Include="Lib.Harmony" Version="2.2.2" Pack="true" />
