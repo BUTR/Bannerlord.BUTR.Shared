@@ -246,7 +246,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
 
             var loadedModules = ModuleInfoHelper.GetLoadedModules().ToList();
-            var moduleIndex = loadedModules.IndexOf(moduleInfo);
+            var moduleIndex = CollectionsExtensions.IndexOf(loadedModules, moduleInfo);
 
             var sb = new StringBuilder();
 
