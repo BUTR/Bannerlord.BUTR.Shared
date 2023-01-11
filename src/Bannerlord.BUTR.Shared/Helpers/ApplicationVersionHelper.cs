@@ -58,6 +58,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static bool TryParse(string? versionAsString, out ApplicationVersion version, bool asMin)
         {
+            version = default;
             var major = asMin ? 0 : int.MaxValue;
             var minor = asMin ? 0 : int.MaxValue;
             var revision = asMin ? 0 : int.MaxValue;
