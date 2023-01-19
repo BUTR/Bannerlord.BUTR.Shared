@@ -11,6 +11,9 @@ EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Bannerlord.BUTR.Shared", "Bannerlord.BUTR.Shared\Bannerlord.BUTR.Shared.csproj", "{AF81D675-8017-44AF-841F-74D4EC7C083B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{01752346-BD76-4EC8-93E3-CB0346325658}"
+	ProjectSection(SolutionItems) = preProject
+		Bannerlord.BUTR.Shared.props = Bannerlord.BUTR.Shared.props
+	EndProjectSection
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "build", "build", "{13E34587-868E-41B5-9AAD-8CC0FF909A82}"
 	ProjectSection(SolutionItems) = preProject
