@@ -44,24 +44,10 @@
 
 namespace Bannerlord.BUTR.Shared.Helpers
 {
-    using global::Bannerlord.BUTR.Shared.Extensions;
     using global::Bannerlord.ModuleManager;
 
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
-    using global::System;
-    using global::System.Collections.Concurrent;
-    using global::System.Collections.Generic;
-    using global::System.Linq;
-    using global::System.IO;
-    using global::System.Text;
-    using global::System.Reflection;
-    using global::System.Xml;
-
-    using global::TaleWorlds.Library;
-    using global::TaleWorlds.MountAndBlade;
-
-    using Module = TaleWorlds.MountAndBlade.Module;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
