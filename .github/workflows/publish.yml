@@ -30,7 +30,7 @@ jobs:
 
     - name: Run _build
       run: >-
-        dotnet pack src/Bannerlord.BUTR.Shared.sln --configuration Release -o "./packages";
+        dotnet pack src/Bannerlord.BUTR.Shared/Bannerlord.BUTR.Shared.csproj --configuration Release -o "./packages";
       shell: pwsh
 
     - name: Push to NuGet
