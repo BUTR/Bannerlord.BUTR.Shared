@@ -32,7 +32,7 @@
     <PackageReference Include="Bannerlord.ReferenceAssemblies.Core" Version="1.0.0.*-*" PrivateAssets="all" Pack="false" />
     <PackageReference Include="BUTR.Harmony.Analyzer" Version="1.0.1.44" PrivateAssets="all" IncludeAssets="runtime; build; native; contentfiles; analyzers; buildtransitive" Pack="false" />
     <PackageReference Include="Lib.Harmony" Version="2.2.2" Pack="false" />
-    <PackageReference Include="Harmony.Extensions" Version="3.2.0.73" Pack="true" />
+    <PackageReference Include="Harmony.Extensions" Version="3.2.0.75" Pack="true" />
   </ItemGroup>
 
 </Project>
