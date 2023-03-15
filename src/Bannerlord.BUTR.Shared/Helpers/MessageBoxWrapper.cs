@@ -36,8 +36,6 @@
 // SOFTWARE.
 #endregion
 
-using HarmonyLib.BUTR.Extensions;
-
 #if !BANNERLORDBUTRSHARED_DISABLE
 #nullable enable
 #if !BANNERLORDBUTRSHARED_ENABLE_WARNINGS
@@ -49,7 +47,10 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::System;
     using global::System.Diagnostics;
     using global::System.Diagnostics.CodeAnalysis;
-    
+    using global::System.Linq;
+    using global::System.Reflection;
+    using global::HarmonyLib.BUTR.Extensions;
+
     internal enum DialogResult
     {
         None,
@@ -101,39 +102,50 @@ namespace Bannerlord.BUTR.Shared.Helpers
         RtlReading = 1048576,
     }
     
+    // Reflection is intentionally simple
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
     [ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
     internal static class MessageBoxWrapper
     {
+        private static readonly Type? MessageBoxType = AccessTools2.TypeByName("System.Windows.Forms.MessageBox");
         private static readonly Type? DialogResultType = AccessTools2.TypeByName("System.Windows.Forms.DialogResult");
         private static readonly Type? MessageBoxButtonsType = AccessTools2.TypeByName("System.Windows.Forms.MessageBoxButtons");
         private static readonly Type? MessageBoxIconType = AccessTools2.TypeByName("System.Windows.Forms.MessageBoxIcon");
         private static readonly Type? MessageBoxDefaultButtonType = AccessTools2.TypeByName("System.Windows.Forms.MessageBoxDefaultButton");
         private static readonly Type? MessageBoxOptionsType = AccessTools2.TypeByName("System.Windows.Forms.MessageBoxOptions");
 
-        private delegate int ShowDelegate(string text, string caption, int buttons);
-        private static readonly ShowDelegate? ShowMethod =
-            AccessTools2.GetDelegate<ShowDelegate>("System.Windows.Forms.MessageBox:Show", new Type[] { typeof(string), typeof(string), MessageBoxButtonsType! });
-        
-        private delegate int ShowDelegate2(string text, string caption, int buttons, int icon, int defaultButton, int options);
-        private static readonly ShowDelegate2? ShowMethod2 =
-            AccessTools2.GetDelegate<ShowDelegate2>("System.Windows.Forms.MessageBox:Show", new Type[] { typeof(string), typeof(string), MessageBoxButtonsType!, MessageBoxIconType!, MessageBoxDefaultButtonType!, MessageBoxOptionsType! });
+        private static MethodInfo? ShowMethodInfo = MessageBoxType?.GetMethods().FirstOrDefault(x => x.Name == "Show" && x.GetParameters() is { Length: 3 } parameters &&
+                                                                                                     parameters[0].ParameterType == typeof(string) &&
+                                                                                                     parameters[1].ParameterType == typeof(string) &&
+                                                                                                     parameters[2].ParameterType == MessageBoxButtonsType);
+        private delegate Enum ShowDelegate(string text, string caption, Enum buttons);
+        private static readonly ShowDelegate? ShowMethod = AccessTools2.GetDelegate<ShowDelegate>(ShowMethodInfo!);
+
+        private static MethodInfo? Show2MethodInfo = MessageBoxType?.GetMethods().FirstOrDefault(x => x.Name == "Show" && x.GetParameters() is { Length: 6 } parameters &&
+                                                                                                      parameters[0].ParameterType == typeof(string) &&
+                                                                                                      parameters[1].ParameterType == typeof(string) &&
+                                                                                                      parameters[2].ParameterType == MessageBoxButtonsType &&
+                                                                                                      parameters[3].ParameterType == MessageBoxIconType &&
+                                                                                                      parameters[4].ParameterType == MessageBoxDefaultButtonType &&
+                                                                                                      parameters[5].ParameterType == MessageBoxOptionsType);
+        private delegate Enum ShowDelegate2(string text, string caption, Enum buttons, Enum icon, Enum defaultButton, Enum options);
+        private static readonly ShowDelegate2? Show2Method = AccessTools2.GetDelegate<ShowDelegate2>(Show2MethodInfo!);
 
         public static DialogResult Show(string text, string caption, MessageBoxButtons buttons)
         {
             if (ShowMethod is null)
                 return DialogResult.None;
 
-            return (DialogResult) ShowMethod(text, caption, (int) buttons);
+            return (DialogResult) ShowMethod(text, caption, buttons);
         }
         
         public static DialogResult Show(string text, string caption, MessageBoxButtons buttons, MessageBoxIcon icon, MessageBoxDefaultButton defaultButton, MessageBoxOptions options)
         {
-            if (ShowMethod2 is null)
+            if (Show2Method is null)
                 return DialogResult.None;
 
-            return (DialogResult) ShowMethod2(text, caption, (int) buttons, (int) icon, (int) defaultButton, (int) options);
+            return (DialogResult) Show2Method(text, caption, buttons, icon, defaultButton, options);
         }
     }
 }
