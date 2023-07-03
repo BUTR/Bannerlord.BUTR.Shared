@@ -233,6 +233,18 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static bool ValidateLoadOrder(ModuleInfoExtended? moduleInfo, out string report)
         {
+            static int IndexOf<T>(IReadOnlyList<T> self, T elementToFind)
+            {
+                var i = 0;
+                foreach (T element in self)
+                {
+                    if (Equals(element, elementToFind))
+                        return i;
+                    i++;
+                }
+                return -1;
+            }
+
             const string SErrorModuleNotFound = @"{=FE6ya1gzZR}{REQUIRED_MODULE} module was not found!";
             const string SErrorIncompatibleModuleFound = @"{=EvI6KPAqTT}Incompatible module {DENIED_MODULE} was found!";
             const string SErrorWrongModuleOrderTooEarly = @"{=5G9zffrgMh}{MODULE} is loaded before the {REQUIRED_MODULE}!{NL}Make sure {MODULE} is loaded after it!";
@@ -246,7 +258,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
 
             var loadedModules = ModuleInfoHelper.GetLoadedModules().ToList();
-            var moduleIndex = CollectionsExtensions.IndexOf(loadedModules, moduleInfo);
+            var moduleIndex = IndexOf(loadedModules, moduleInfo);
 
             var sb = new StringBuilder();
 
