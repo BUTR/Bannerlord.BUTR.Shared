@@ -381,10 +381,18 @@ namespace Bannerlord.BUTR.Shared.Helpers
             if (assembly.IsDynamic || string.IsNullOrWhiteSpace(assembly.CodeBase))
                 return false;
 
+            return IsInModule(loadedModule, assembly.CodeBase);
+        }
+
+        public static bool IsInModule(ModuleInfoExtendedWithMetadata loadedModule, string filePath)
+        {
+            if (string.IsNullOrWhiteSpace(filePath))
+                return false;
+
             var modulePath = new Uri(Path.GetFullPath(loadedModule.Path));
             var moduleDirectory = Path.GetFileName(loadedModule.Path);
 
-            var assemblyPath = new Uri(assembly.CodeBase);
+            var assemblyPath = new Uri(filePath);
             var relativePath = modulePath.MakeRelativeUri(assemblyPath);
             return relativePath.OriginalString.StartsWith(moduleDirectory);
         }
