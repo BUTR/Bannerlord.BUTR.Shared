@@ -84,9 +84,9 @@ namespace Bannerlord.BUTR.Shared.Helpers
             _platformModuleExtensionField = AccessTools2.StaticFieldRefAccess<IPlatformModuleExtension>("TaleWorlds.ModuleManager.ModuleHelper:_platformModuleExtension");
         }
 
-        public static ModuleInfoExtendedWithMetadata? LoadFromId(string id) => GetModules().FirstOrDefault(x => x.Id == id);
+        public static ModuleInfoExtendedHelper? LoadFromId(string id) => GetModules().FirstOrDefault(x => x.Id == id);
 
-        public static IEnumerable<ModuleInfoExtendedWithMetadata> GetLoadedModules()
+        public static IEnumerable<ModuleInfoExtendedHelper> GetLoadedModules()
         {
             var moduleNames = TaleWorlds.Engine.Utilities.GetModulesNames();
             if (moduleNames.Length == 0) yield break;
@@ -99,9 +99,9 @@ namespace Bannerlord.BUTR.Shared.Helpers
             }
         }
 
-        private static Lazy<List<ModuleInfoExtendedWithMetadata>> _cachedModules = new(() =>
+        private static Lazy<List<ModuleInfoExtendedHelper>> _cachedModules = new(() =>
         {
-            var list = new List<ModuleInfoExtendedWithMetadata>();
+            var list = new List<ModuleInfoExtendedHelper>();
             var foundIds = new HashSet<string>();
             foreach (var moduleInfo in GetPhysicalModules().Concat(GetPlatformModules()))
             {
@@ -117,7 +117,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
         /// <summary>
         /// Provides unordered modules
         /// </summary>
-        public static IEnumerable<ModuleInfoExtendedWithMetadata> GetModules() => _cachedModules.Value;
+        public static IEnumerable<ModuleInfoExtendedHelper> GetModules() => _cachedModules.Value;
 
         private static ConcurrentDictionary<string, string> _cachedAssemblyLocationToModulePath = new();
         public static string? GetModulePath(Type? type)
@@ -150,7 +150,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
 
         public static string? GetModulePath(ModuleInfoExtended module) => _cachedModules.Value.FirstOrDefault(x => x.Id == module.Id)?.Path;
 
-        public static ModuleInfoExtendedWithMetadata? GetModuleByType(Type? type)
+        public static ModuleInfoExtendedHelper? GetModuleByType(Type? type)
         {
             var modulePath = GetModulePath(type);
             return _cachedModules.Value.FirstOrDefault(x => x.Path == modulePath);
@@ -159,18 +159,18 @@ namespace Bannerlord.BUTR.Shared.Helpers
         private static string GetFullPathWithEndingSlashes(string input) =>
             $"{Path.GetFullPath(input).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)}{Path.DirectorySeparatorChar}";
 
-        public static IEnumerable<ModuleInfoExtendedWithMetadata> GetPhysicalModules()
+        public static IEnumerable<ModuleInfoExtendedHelper> GetPhysicalModules()
         {
             if (string.IsNullOrEmpty(TaleWorlds.Library.BasePath.Name)) yield break;
 
             foreach (var modulePath in Directory.GetDirectories(Path.Combine(TaleWorlds.Library.BasePath.Name, ModulesFolder)))
             {
                 if (TryReadXml(Path.Combine(modulePath, SubModuleFile), out var xml)&& ModuleInfoExtended.FromXml(xml) is { } moduleInfo)
-                    yield return new ModuleInfoExtendedWithMetadata(moduleInfo, false, Path.GetFullPath(modulePath));
+                    yield return new ModuleInfoExtendedHelper(moduleInfo, false, Path.GetFullPath(modulePath));
             }
         }
 
-        public static IEnumerable<ModuleInfoExtendedWithMetadata> GetPlatformModules()
+        public static IEnumerable<ModuleInfoExtendedHelper> GetPlatformModules()
         {
             if (_platformModuleExtensionField == null) yield break;
 
@@ -183,7 +183,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             foreach (string modulePath in modulePaths)
             {
                 if (TryReadXml(Path.Combine(modulePath, SubModuleFile), out var xml) && ModuleInfoExtended.FromXml(xml) is { } moduleInfo)
-                    yield return new ModuleInfoExtendedWithMetadata(moduleInfo, true, Path.GetFullPath(modulePath));
+                    yield return new ModuleInfoExtendedHelper(moduleInfo, true, Path.GetFullPath(modulePath));
             }
         }
 
@@ -376,7 +376,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
         }
 
 
-        public static bool IsModuleAssembly(ModuleInfoExtendedWithMetadata loadedModule, Assembly assembly)
+        public static bool IsModuleAssembly(ModuleInfoExtendedHelper loadedModule, Assembly assembly)
         {
             if (assembly.IsDynamic || string.IsNullOrWhiteSpace(assembly.CodeBase))
                 return false;
@@ -384,7 +384,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             return IsInModule(loadedModule, assembly.CodeBase);
         }
 
-        public static bool IsInModule(ModuleInfoExtendedWithMetadata loadedModule, string filePath)
+        public static bool IsInModule(ModuleInfoExtendedHelper loadedModule, string filePath)
         {
             if (string.IsNullOrWhiteSpace(filePath))
                 return false;
