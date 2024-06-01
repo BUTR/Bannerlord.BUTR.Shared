@@ -57,7 +57,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::TaleWorlds.Core;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
-    [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage, global::System.Diagnostics.CodeAnalysis.DebuggerNonUserCode]
+    [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage, global::System.Diagnostics.DebuggerNonUserCode]
 #endif
     internal static class DecoratorModelHelper
     {
