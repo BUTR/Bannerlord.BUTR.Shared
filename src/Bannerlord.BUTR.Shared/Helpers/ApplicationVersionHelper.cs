@@ -50,7 +50,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::TaleWorlds.Library;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
-    [ExcludeFromCodeCoverage, DebuggerNonUserCode]
+    [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
     internal static class ApplicationVersionHelper
     {

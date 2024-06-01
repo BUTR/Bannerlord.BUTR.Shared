@@ -70,7 +70,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using Module = TaleWorlds.MountAndBlade.Module;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
-    [ExcludeFromCodeCoverage, DebuggerNonUserCode]
+    [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
     internal static class ModuleInfoHelper
     {

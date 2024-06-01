@@ -49,7 +49,7 @@ namespace Bannerlord.BUTR.Shared.Extensions
     using global::System.Collections.Generic;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
-    [ExcludeFromCodeCoverage, DebuggerNonUserCode]
+    [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
     internal static class DictionaryExtensions
     {

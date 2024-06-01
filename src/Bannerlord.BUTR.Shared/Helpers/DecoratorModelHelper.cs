@@ -45,7 +45,7 @@
 
 namespace Bannerlord.BUTR.Shared.Helpers
 {
-#if USE_LOGGER
+#if BANNERLORDBUTRSHARED_USE_LOGGER
     using global::Microsoft.Extensions.Logging;
 #endif
 
@@ -57,11 +57,11 @@ namespace Bannerlord.BUTR.Shared.Helpers
     using global::TaleWorlds.Core;
 
 #if !BANNERLORDBUTRSHARED_INCLUDE_IN_CODE_COVERAGE
-    [ExcludeFromCodeCoverage, DebuggerNonUserCode]
+    [global::System.Diagnostics.CodeAnalysis.ExcludeFromCodeCoverage, DebuggerNonUserCode]
 #endif
     internal static class DecoratorModelHelper
     {
-#if USE_LOGGER
+#if BANNERLORDBUTRSHARED_USE_LOGGER
         public static void AddDecoratorModel<TBase, TNew, TDef>(IGameStarter gameStarterObject, CampaignGameStarter gameStarter, Func<TBase, TNew> decoratorModelCtor, ILogger logger)
 #else
         public static void AddDecoratorModel<TBase, TNew, TDef>(IGameStarter gameStarterObject, CampaignGameStarter gameStarter, Func<TBase, TNew> decoratorModelCtor)
@@ -73,7 +73,7 @@ namespace Bannerlord.BUTR.Shared.Helpers
             var currentModel = GetGameModel<TBase>(gameStarterObject);
             if (currentModel is null)
             {
-#if USE_LOGGER
+#if BANNERLORDBUTRSHARED_USE_LOGGER
                 logger.LogWarning($"No default model of type \"{typeof(TBase).FullName}\" was found!");
 #else
                 Trace.TraceWarning($"No default model of type \"{typeof(TBase).FullName}\" was found!");
